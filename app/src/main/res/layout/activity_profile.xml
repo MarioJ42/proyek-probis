@@ -27,6 +27,7 @@
                     android:backgroundTint="@color/background_purple"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintVertical_bias="0.0">
@@ -85,8 +86,8 @@
                         tools:srcCompat="@tools:sample/avatars" />
 
                     <LinearLayout
-                        android:layout_width="373dp"
-                        android:layout_height="430dp"
+                        android:layout_width="367dp"
+                        android:layout_height="147dp"
                         android:layout_marginStart="20dp"
                         android:layout_marginTop="71dp"
                         android:layout_marginEnd="19dp"
@@ -103,6 +104,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="Saldo"
+                            android:textAlignment="center"
                             android:textColor="@color/design_default_color_background"
                             android:textSize="34sp" />
 
@@ -111,32 +113,36 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="Rp10.000"
+                            android:textAlignment="center"
                             android:textColor="@color/design_default_color_background"
                             android:textSize="24sp" />
 
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="65dp"
-                            android:orientation="horizontal">
+                            android:layout_height="wrap_content"
+                            android:baselineAligned="false"
+                            android:orientation="horizontal"
+                            android:textAlignment="center">
 
                             <Button
                                 android:id="@+id/button3"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Mutasi" />
+                                android:text="Profile"
+                                android:textAlignment="center" />
 
                             <Button
                                 android:id="@+id/button4"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Qris" />
+                                android:text="Change Password" />
 
                             <Button
                                 android:id="@+id/button7"
-                                android:layout_width="128dp"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Kantong Produk" />
+                                android:text="Premium Account" />
 
                         </LinearLayout>
 
