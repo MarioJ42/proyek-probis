@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Outer square frame -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1"
+        android:pathData="M4,4 h16 v16 h-16 z"/>
+
+    <!-- Top-left QR square -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M5,5 h4 v4 h-4 z"/>
+
+    <!-- Top-right QR square -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M15,5 h4 v4 h-4 z"/>
+
+    <!-- Bottom-left QR square -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M5,15 h4 v4 h-4 z"/>
+
+    <!-- Smaller inner squares to mimic QR code pattern -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M11,7 h2 v2 h-2 z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M7,11 h2 v2 h-2 z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M15,13 h2 v2 h-2 z"/>
+
+    <!-- Scan line effect (diagonal line) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"
+        android:pathData="M6,6 l12,12"/>
+</vector>

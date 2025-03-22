@@ -67,7 +67,7 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Quick Actions (Top Up, Transfer, History) -->
+    <!-- Quick Actions (Top Up, Transfer, History, Investasi & Tabungan, QRIS Payment) -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/gridServices"
         android:layout_width="match_parent"
@@ -75,12 +75,14 @@
         app:layout_constraintTop_toBottomOf="@id/cardSaldo"
         android:layout_marginTop="16dp">
 
+        <!-- First Row: Top Up, Transfer, History -->
         <LinearLayout
             android:id="@+id/topUp"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
+            app:layout_constraintWidth_percent="0.333"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toStartOf="@id/transfer">
@@ -98,10 +100,11 @@
 
         <LinearLayout
             android:id="@+id/transfer"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
+            app:layout_constraintWidth_percent="0.333"
             app:layout_constraintStart_toEndOf="@id/topUp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toStartOf="@id/history">
@@ -119,10 +122,11 @@
 
         <LinearLayout
             android:id="@+id/history"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
+            app:layout_constraintWidth_percent="0.333"
             app:layout_constraintStart_toEndOf="@id/transfer"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -137,6 +141,68 @@
                 android:text="History"
                 android:textColor="@android:color/white" />
         </LinearLayout>
+
+        <!-- Second Row: Investasi & Tabungan, QRIS Payment -->
+        <LinearLayout
+            android:id="@+id/investasi_tabungan"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            app:layout_constraintWidth_percent="0.333"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/topUp"
+            app:layout_constraintEnd_toStartOf="@id/qris_payment">
+
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_investasi_tabungan" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Investasi Tabungan"
+                android:textColor="@android:color/white"
+                android:maxLines="2"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/qris_payment"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            app:layout_constraintWidth_percent="0.333"
+            app:layout_constraintStart_toEndOf="@id/investasi_tabungan"
+            app:layout_constraintTop_toBottomOf="@id/transfer"
+            app:layout_constraintEnd_toStartOf="@id/empty_space">
+
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_qris_payment" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="QRIS Payment"
+                android:textColor="@android:color/white"
+                android:maxLines="2"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <!-- Empty space to maintain alignment -->
+        <LinearLayout
+            android:id="@+id/empty_space"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            app:layout_constraintWidth_percent="0.333"
+            app:layout_constraintStart_toEndOf="@id/qris_payment"
+            app:layout_constraintTop_toBottomOf="@id/history"
+            app:layout_constraintEnd_toEndOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Bottom Navigation with Complete Menu -->
