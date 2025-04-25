@@ -21,9 +21,9 @@
             android:id="@+id/avatar"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:src="@drawable/ic_avatar"
             android:background="@drawable/circle_bg"
-            android:scaleType="centerCrop" />
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_launcher_foreground" />
 
         <TextView
             android:id="@+id/username"
