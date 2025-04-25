@@ -73,8 +73,9 @@
         android:id="@+id/textView4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="192dp"
         android:layout_marginTop="120dp"
         android:text="Don't Have An Account? Register"
-        app:layout_constraintTop_toBottomOf="@+id/editTextTextPassword"
-        tools:layout_editor_absoluteX="192dp" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editTextTextPassword" />
 </androidx.constraintlayout.widget.ConstraintLayout>
