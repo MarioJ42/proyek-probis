@@ -16,12 +16,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+<<<<<<< Updated upstream
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_main)
+=======
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+>>>>>>> Stashed changes
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+<<<<<<< Updated upstream
+=======
         binding.textView4.setOnClickListener{
             val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)
@@ -47,5 +54,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+>>>>>>> Stashed changes
     }
 }
