@@ -9,5 +9,6 @@ data class User(
     val fullName: String,
     val email: String,
     val password: String,
-    val balance: Double = 0.0 // Add balance field with default value 0.0
+    var balance: Double = 0.0,
+    var premium: Boolean = false
 )

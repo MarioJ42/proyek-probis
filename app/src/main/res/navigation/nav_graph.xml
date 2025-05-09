@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginFragment">
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.projectmdp.LoginFragment"
+        android:label="LoginFragment">
+        <action
+            android:id="@+id/action_loginFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.example.projectmdp.RegisterFragment"
+        android:label="RegisterFragment">
+        <action
+            android:id="@+id/action_registerFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.projectmdp.HomeFragment"
+        android:label="HomeFragment">
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_homeFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_transferFragment"
+            app:destination="@id/transferFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_topUpFragment"
+            app:destination="@id/topUpFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_historyFragment"
+            app:destination="@id/historyFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_investasiTabunganFragment"
+            app:destination="@id/investasiTabunganFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_qrisPaymentFragment"
+            app:destination="@id/qrisPaymentFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.example.projectmdp.HistoryFragment"
+        android:label="HistoryFragment">
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_historyFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_historyFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/investasiTabunganFragment"
+        android:name="com.example.projectmdp.InvestasiTabunganFragment"
+        android:label="InvestasiTabunganFragment">
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_investasiTabunganFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_investasiTabunganFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/qrisPaymentFragment"
+        android:name="com.example.projectmdp.QrisPaymentFragment"
+        android:label="QrisPaymentFragment">
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_qrisPaymentFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_qrisPaymentFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.projectmdp.ProfileFragment"
+        android:label="ProfileFragment">
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_profileFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/transferFragment"
+        android:name="com.example.projectmdp.TransferFragment"
+        android:label="TransferFragment">
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_transferFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/topUpFragment"
+        android:name="com.example.projectmdp.TopUpFragment"
+        android:label="TopUpFragment">
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_topUpFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+    </fragment>
+</navigation>
