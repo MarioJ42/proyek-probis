@@ -1,6 +1,7 @@
 package com.example.projectmdp
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -22,25 +23,29 @@ class UserViewModel(private val repository: UserDao) : ViewModel() {
         viewModelScope.launch {
             val user = repository.getUserByEmail(email)
             if (user != null && user.password == password) {
-                _user.value = user
-                _balance.value = user.balance
-                _loginResult.value = true
+                _user.postValue(user)
+                _balance.postValue(user.balance)
+                _loginResult.postValue(true)
             } else {
-                _loginResult.value = false
+                _loginResult.postValue(false)
             }
         }
     }
 
     fun fetchUser(email: String) {
         viewModelScope.launch {
-            _user.value = repository.getUserByEmail(email)
-            _user.value?.let { user -> _balance.value = user.balance }
+            val user = repository.getUserByEmail(email)
+            _user.postValue(user)
+            user?.let {
+                _balance.postValue(it.balance)
+                Log.d("UserViewModel", "fetchUser: Email = $email, Balance = ${it.balance}")
+            } ?: Log.e("UserViewModel", "fetchUser: User not found for email = $email")
         }
     }
 
-    fun register(email: String, fullName: String, password: String) {
+    fun register(email: String, fullName: String, password: String, pin: String) {
         viewModelScope.launch {
-            val user = User(fullName = fullName, email = email, password = password)
+            val user = User(fullName = fullName, email = email, password = password, pin = pin)
             repository.insertUser(user)
         }
     }
@@ -72,8 +77,10 @@ class UserViewModel(private val repository: UserDao) : ViewModel() {
             try {
                 repository.transfer(fromEmail, toEmail, amount)
                 fetchUser(fromEmail)
+                Log.d("UserViewModel", "Transfer: New sender balance = ${_user.value?.balance}")
                 onResult(null)
             } catch (e: IllegalArgumentException) {
+                Log.e("UserViewModel", "Transfer failed: ${e.message}")
                 onResult(e.message)
             }
         }
@@ -92,8 +99,10 @@ class UserViewModel(private val repository: UserDao) : ViewModel() {
                 val updatedUser = user.copy(balance = user.balance - amount)
                 repository.updateUser(updatedUser)
                 fetchUser(fromEmail)
+                Log.d("UserViewModel", "TransferToBank: New balance = ${_user.value?.balance}")
                 onResult(null)
             } catch (e: IllegalArgumentException) {
+                Log.e("UserViewModel", "TransferToBank failed: ${e.message}")
                 onResult(e.message)
             }
         }

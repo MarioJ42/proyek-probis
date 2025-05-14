@@ -10,5 +10,6 @@ data class User(
     val email: String,
     val password: String,
     var balance: Double = 0.0,
-    var premium: Boolean = false
+    var premium: Boolean = false,
+    val pin: String // Add 6-digit PIN
 )

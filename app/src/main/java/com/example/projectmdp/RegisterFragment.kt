@@ -30,13 +30,14 @@ class RegisterFragment : Fragment() {
             val email = binding.editTextTextEmailAddress.text.toString()
             val fullName = binding.editTextText.text.toString()
             val password = binding.editTextTextPassword.text.toString()
+            val pin = binding.editTextTextPin?.text.toString() // Add PIN input
 
-            if (email.isEmpty() || fullName.isEmpty() || password.isEmpty()) {
-                Toast.makeText(requireContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show()
+            if (email.isEmpty() || fullName.isEmpty() || password.isEmpty() || pin.isEmpty() || pin.length != 6) {
+                Toast.makeText(requireContext(), "Please fill in all fields with a 6-digit PIN", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            viewModel.register(email, fullName, password)
+            viewModel.register(email, fullName, password, pin) // Update register call
             Toast.makeText(requireContext(), "Registration successful", Toast.LENGTH_SHORT).show()
             findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
         }

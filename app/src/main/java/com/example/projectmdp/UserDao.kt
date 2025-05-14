@@ -1,5 +1,6 @@
 package com.example.projectmdp
 
+import android.util.Log
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
@@ -39,7 +40,9 @@ interface UserDao {
         sender.balance -= amount
         recipient.balance += amount
 
+        Log.d("UserDao", "Before update: Sender balance = ${sender.balance}, Recipient balance = ${recipient.balance}")
         updateUser(sender)
         updateUser(recipient)
+        Log.d("UserDao", "After update: Sender balance = ${getUserByEmail(fromEmail)?.balance}, Recipient balance = ${getUserByEmail(toEmail)?.balance}")
     }
 }

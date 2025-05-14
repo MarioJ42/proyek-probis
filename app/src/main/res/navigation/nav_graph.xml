@@ -4,6 +4,7 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/loginFragment">
 
+    <!-- Login Fragment -->
     <fragment
         android:id="@+id/loginFragment"
         android:name="com.example.projectmdp.LoginFragment"
@@ -16,6 +17,7 @@
             app:destination="@id/homeFragment" />
     </fragment>
 
+    <!-- Register Fragment -->
     <fragment
         android:id="@+id/registerFragment"
         android:name="com.example.projectmdp.RegisterFragment"
@@ -25,6 +27,7 @@
             app:destination="@id/loginFragment" />
     </fragment>
 
+    <!-- Home Fragment -->
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.example.projectmdp.HomeFragment"
@@ -53,6 +56,7 @@
             app:destination="@id/qrisPaymentFragment" />
     </fragment>
 
+    <!-- History Fragment -->
     <fragment
         android:id="@+id/historyFragment"
         android:name="com.example.projectmdp.HistoryFragment"
@@ -69,6 +73,7 @@
             app:destination="@id/homeFragment" />
     </fragment>
 
+    <!-- Investasi Tabungan Fragment -->
     <fragment
         android:id="@+id/investasiTabunganFragment"
         android:name="com.example.projectmdp.InvestasiTabunganFragment"
@@ -85,6 +90,7 @@
             app:destination="@id/homeFragment" />
     </fragment>
 
+    <!-- QRIS Payment Fragment -->
     <fragment
         android:id="@+id/qrisPaymentFragment"
         android:name="com.example.projectmdp.QrisPaymentFragment"
@@ -101,6 +107,7 @@
             app:destination="@id/homeFragment" />
     </fragment>
 
+    <!-- Profile Fragment -->
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.example.projectmdp.ProfileFragment"
@@ -114,6 +121,7 @@
             app:destination="@id/loginFragment" />
     </fragment>
 
+    <!-- Transfer Fragment -->
     <fragment
         android:id="@+id/transferFragment"
         android:name="com.example.projectmdp.TransferFragment"
@@ -125,8 +133,12 @@
         <action
             android:id="@+id/action_transferFragment_to_homeFragment"
             app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_transferFragment_to_pinVerificationFragment"
+            app:destination="@id/pinVerificationFragment" />
     </fragment>
 
+    <!-- Top Up Fragment -->
     <fragment
         android:id="@+id/topUpFragment"
         android:name="com.example.projectmdp.TopUpFragment"
@@ -137,6 +149,42 @@
             android:defaultValue="" />
         <action
             android:id="@+id/action_topUpFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_topUpFragment_to_pinVerificationFragment"
+            app:destination="@id/pinVerificationFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/pinVerificationFragment"
+        android:name="com.example.projectmdp.PinVerificationFragment"
+        android:label="PinVerificationFragment">
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="recipient"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="amount"
+            app:argType="float"
+        android:defaultValue="0.0" />
+        <argument
+            android:name="transferType"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="bankAccount"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="topUpMethod"
+            app:argType="string"
+            app:nullable="true" />
+        <action
+            android:id="@+id/action_pinVerificationFragment_to_homeFragment"
             app:destination="@id/homeFragment" />
     </fragment>
 </navigation>

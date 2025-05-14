@@ -7,8 +7,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#6200EA"
-        android:padding="16dp">
+        android:padding="16dp"
+        tools:context=".TransferFragment">
 
+        <!-- Back Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnBack"
             android:layout_width="wrap_content"
@@ -20,17 +22,32 @@
             app:layout_constraintStart_toStartOf="parent"
             android:layout_marginTop="16dp" />
 
-        <Spinner
-            android:id="@+id/transferTypeSpinner"
-            android:layout_width="0dp"
+        <!-- Transfer Title -->
+        <TextView
+            android:id="@+id/textViewTransferTitle"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:backgroundTint="@android:color/white"
+            android:text="Transfer"
+            android:textSize="20sp"
+            android:textStyle="bold"
             android:textColor="@android:color/white"
             app:layout_constraintTop_toBottomOf="@id/btnBack"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="16dp" />
 
+        <!-- Transfer Type Spinner -->
+        <Spinner
+            android:id="@+id/transferTypeSpinner"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@android:color/white"
+            app:layout_constraintTop_toBottomOf="@id/textViewTransferTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp" />
+
+        <!-- Recipient Input -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/recipientInputLayout"
             android:layout_width="0dp"
@@ -50,6 +67,7 @@
                 android:textColorHint="@android:color/white" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Amount Input -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/amountInputLayout"
             android:layout_width="0dp"
@@ -69,6 +87,7 @@
                 android:textColorHint="@android:color/white" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Transfer Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnTransfer"
             android:layout_width="0dp"
@@ -93,13 +112,28 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="24dp">
 
+            <!-- Bank Transfer Title -->
+            <TextView
+                android:id="@+id/textViewBankTransferTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bank Transfer (Premium)"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- Bank Account Input -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/bankAccountInputLayout"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/textViewBankTransferTitle"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="16dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputBankAccount"
@@ -111,6 +145,7 @@
                     android:textColorHint="@android:color/white" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Bank Amount Input -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/bankAmountInputLayout"
                 android:layout_width="0dp"
@@ -130,6 +165,7 @@
                     android:textColorHint="@android:color/white" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Bank Transfer Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnBankTransfer"
                 android:layout_width="0dp"

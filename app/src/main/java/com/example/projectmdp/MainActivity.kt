@@ -62,10 +62,17 @@ class MainActivity : AppCompatActivity() {
 
         // Listen for login success to set userEmail
         navController.addOnDestinationChangedListener { _, destination, args ->
-            if (destination.id == R.id.homeFragment) {
-                userEmail = args?.getString("userEmail")
-                Log.d("MainActivity", "User email set: $userEmail")
+            when (destination.id) {
+                R.id.homeFragment, R.id.loginFragment, R.id.registerFragment -> {
+                    userEmail = args?.getString("userEmail")
+                    Log.d("MainActivity", "User email set: $userEmail")
+                }
             }
         }
+    }
+
+    // Handle back navigation
+    override fun onSupportNavigateUp(): Boolean {
+        return navController.navigateUp() || super.onSupportNavigateUp()
     }
 }

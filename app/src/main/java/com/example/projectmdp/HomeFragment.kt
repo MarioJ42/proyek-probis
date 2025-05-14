@@ -1,6 +1,7 @@
 package com.example.projectmdp
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -28,6 +29,7 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val userEmail = arguments?.getString("userEmail") ?: ""
+        Log.d("HomeFragment", "Received userEmail: $userEmail")
         if (userEmail.isEmpty()) {
             findNavController().navigate(R.id.action_homeFragment_to_loginFragment)
             return
@@ -48,6 +50,7 @@ class HomeFragment : Fragment() {
                 .format(balance)
                 .replace("IDR", "Rp ")
             binding.balanceTextView.text = formattedBalance
+            Log.d("HomeFragment", "Balance updated: $balance")
         }
 
         binding.topUp.setOnClickListener {
