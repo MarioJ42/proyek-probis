@@ -65,9 +65,7 @@ class HomeFragment : Fragment() {
         }
 
         binding.history.setOnClickListener {
-            val bundle = Bundle().apply {
-                putString("userEmail", userEmail)
-            }
+            val bundle = Bundle().apply { putString("userEmail", userEmail) }
             findNavController().navigate(R.id.action_homeFragment_to_historyFragment, bundle)
         }
 

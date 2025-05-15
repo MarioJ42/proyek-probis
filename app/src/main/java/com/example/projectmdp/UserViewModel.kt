@@ -24,6 +24,9 @@ class UserViewModel : ViewModel() {
     private val _loginResult = MutableLiveData<Boolean?>()
     val loginResult: LiveData<Boolean?> get() = _loginResult
 
+    private val _topUpResult = MutableLiveData<Boolean>()
+    val topUpResult: LiveData<Boolean> get() = _topUpResult
+
     fun login(email: String, password: String) {
         viewModelScope.launch {
             try {
@@ -123,10 +126,27 @@ class UserViewModel : ViewModel() {
                     val docId = snapshot.documents[0].id
                     val currentBalance = snapshot.documents[0].toObject(User::class.java)?.balance ?: 0.0
                     usersCollection.document(docId).update("balance", currentBalance + amount).await()
+
+                    // Log the top-up transaction
+                    val transaksi = Transaksi(
+                        userEmail = email,
+                        type = "TopUp Saldo",
+                        recipient = "System",
+                        amount = amount,
+                        timestamp = com.google.firebase.Timestamp.now(),
+                        status = "Completed"
+                    )
+                    logTransaction(transaksi)
+
                     fetchUser(email)
+                    _topUpResult.postValue(true)
+                } else {
+                    Log.e("UserViewModel", "Top-up failed: User not found for email = $email")
+                    _topUpResult.postValue(false)
                 }
             } catch (e: Exception) {
                 Log.e("UserViewModel", "Top-up error: ${e.message}")
+                _topUpResult.postValue(false)
             }
         }
     }
@@ -218,15 +238,13 @@ class UserViewModel : ViewModel() {
         }
     }
 
-
     fun logTransaction(transaksi: Transaksi) {
+        val normalizedTransaksi = transaksi.copy(userEmail = transaksi.userEmail.lowercase())
         db.collection("transactions")
-            .add(transaksi)
-            .addOnSuccessListener { Log.d("UserViewModel", "Transaction logged: ${transaksi}") }
+            .add(normalizedTransaksi)
+            .addOnSuccessListener { Log.d("UserViewModel", "Transaction logged: ${normalizedTransaksi}") }
             .addOnFailureListener { e -> Log.e("UserViewModel", "Failed to log transaction: ${e.message}") }
     }
-
-
 
     fun setPremiumStatus(email: String) {
         viewModelScope.launch {

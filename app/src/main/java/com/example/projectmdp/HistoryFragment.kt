@@ -1,6 +1,7 @@
 package com.example.projectmdp
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -33,6 +34,13 @@ class HistoryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val userEmail = arguments?.getString("userEmail") ?: ""
+        Log.d("HistoryFragment", "onViewCreated: userEmail = $userEmail")
+        if (userEmail.isEmpty()) {
+            Log.w("HistoryFragment", "userEmail is empty, navigating back to login")
+            findNavController().navigate(R.id.action_historyFragment_to_loginFragment)
+            return
+        }
+
         viewModel.fetchUser(userEmail)
 
         binding.backButton.setOnClickListener {
@@ -43,15 +51,26 @@ class HistoryFragment : Fragment() {
     }
 
     private fun loadTransactionHistory(userEmail: String) {
+        val normalizedEmail = userEmail.lowercase()
+        Log.d("HistoryFragment", "loadTransactionHistory: Querying for userEmail = $normalizedEmail")
+
         db.collection("transactions")
-            .whereEqualTo("userEmail", userEmail)
+            .whereEqualTo("userEmail", normalizedEmail)
             .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { querySnapshot ->
+                Log.d("HistoryFragment", "Query successful: Found ${querySnapshot.size()} transactions")
                 binding.transactionTable.removeViews(1, binding.transactionTable.childCount - 1) // Clear existing rows except header
+                if (querySnapshot.isEmpty) {
+                    Log.w("HistoryFragment", "No transactions found for userEmail = $normalizedEmail")
+                    Toast.makeText(context, "No transactions found.", Toast.LENGTH_SHORT).show()
+                }
                 for (document in querySnapshot) {
                     val transaksi = document.toObject(Transaksi::class.java)
-                    val date = transaksi.timestamp?.let { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(it.toDate()) } ?: "N/A"
+                    Log.d("HistoryFragment", "Processing transaction: $transaksi")
+                    val date = transaksi.timestamp?.let {
+                        SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(it.toDate())
+                    } ?: "N/A"
 
                     val row = TableRow(context)
                     row.addView(createTextView(transaksi.type))
@@ -64,9 +83,12 @@ class HistoryFragment : Fragment() {
                     row.setPadding(0, 0, 0, 1)
 
                     binding.transactionTable.addView(row)
+                    Log.d("HistoryFragment", "Added row to table: ${transaksi.type}, ${transaksi.recipient}, ${transaksi.amount}, $date, ${transaksi.status}")
                 }
+                Log.d("HistoryFragment", "Table now has ${binding.transactionTable.childCount} rows (including header)")
             }
             .addOnFailureListener { e ->
+                Log.e("HistoryFragment", "Failed to load transactions: ${e.message}")
                 Toast.makeText(context, "Failed to load history: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }

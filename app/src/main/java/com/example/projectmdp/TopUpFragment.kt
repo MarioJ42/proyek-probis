@@ -29,6 +29,7 @@ class TopUpFragment : Fragment() {
         val userEmail = arguments?.getString("userEmail") ?: ""
         if (userEmail.isEmpty()) {
             Toast.makeText(requireContext(), "User email not found", Toast.LENGTH_SHORT).show()
+//            findNavController().navigate(R.id.action_topUpFragment_to_loginFragment)
             return
         }
 
@@ -41,16 +42,23 @@ class TopUpFragment : Fragment() {
 
         binding.btnTopUp.setOnClickListener {
             val amount = binding.inputTopUpAmount.text.toString().toDoubleOrNull()
-            if (amount == null) {
+            if (amount == null || amount <= 0) {
                 Toast.makeText(requireContext(), "Please enter a valid amount", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             viewModel.topUp(userEmail, amount)
-            Toast.makeText(requireContext(), "Top-up successful", Toast.LENGTH_SHORT).show()
-            val bundle = Bundle().apply {
-                putString("userEmail", userEmail)
+        }
+
+        viewModel.topUpResult.observe(viewLifecycleOwner) { success ->
+            if (success) {
+                Toast.makeText(requireContext(), "Top-up successful", Toast.LENGTH_SHORT).show()
+                val bundle = Bundle().apply {
+                    putString("userEmail", userEmail)
+                }
+                findNavController().navigate(R.id.action_topUpFragment_to_homeFragment, bundle)
+            } else {
+                Toast.makeText(requireContext(), "Top-up failed. Please try again.", Toast.LENGTH_SHORT).show()
             }
-            findNavController().navigate(R.id.action_topUpFragment_to_homeFragment, bundle)
         }
     }
 

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,15 +9,17 @@
     <!-- Header -->
     <TextView
         android:id="@+id/historyTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Transaction History"
         android:textColor="#FFFFFF"
         android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="16dp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp" />
 
     <!-- Back Button -->
     <Button
@@ -28,9 +31,9 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="16dp"
-        android:layout_marginStart="48dp" />
+        android:layout_marginStart="16dp" />
 
-    <!-- Table Layout -->
+    <!-- Table Scroll View -->
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -38,74 +41,73 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/nav_view"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp">
+        android:layout_margin="16dp">
 
         <TableLayout
             android:id="@+id/transactionTable"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:stretchColumns="0,1,2,3,4">
+            android:stretchColumns="0,1,2,3,4"
+            android:background="#FFFFFF"
+            android:padding="4dp">
 
             <!-- Header Row -->
             <TableRow
-                android:background="#FFFFFF"
+                android:background="#D1C4E9"
                 android:layout_marginBottom="1dp">
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Type"
+                    android:textStyle="bold"
                     android:textColor="#000000"
-                    android:textSize="16sp"
+                    android:textSize="14sp"
                     android:padding="8dp"
-                    android:layout_weight="1"
                     android:gravity="center" />
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Recipient/Account"
+                    android:text="Recipient"
+                    android:textStyle="bold"
                     android:textColor="#000000"
-                    android:textSize="16sp"
+                    android:textSize="14sp"
                     android:padding="8dp"
-                    android:layout_weight="1"
                     android:gravity="center" />
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Amount"
+                    android:textStyle="bold"
                     android:textColor="#000000"
-                    android:textSize="16sp"
+                    android:textSize="14sp"
                     android:padding="8dp"
-                    android:layout_weight="1"
                     android:gravity="center" />
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Date"
+                    android:textStyle="bold"
                     android:textColor="#000000"
-                    android:textSize="16sp"
+                    android:textSize="14sp"
                     android:padding="8dp"
-                    android:layout_weight="1"
                     android:gravity="center" />
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Status"
+                    android:textStyle="bold"
                     android:textColor="#000000"
-                    android:textSize="16sp"
+                    android:textSize="14sp"
                     android:padding="8dp"
-                    android:layout_weight="1"
                     android:gravity="center" />
             </TableRow>
 
-            <!-- Dynamic Rows will be added programmatically -->
+            <!-- Dynamic Rows here -->
         </TableLayout>
     </ScrollView>
 
@@ -117,6 +119,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:menu="@menu/bottom_navigation_menu" />
+        app:menu="@menu/bottom_navigation_menu"
+        android:background="@color/white" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
