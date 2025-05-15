@@ -26,15 +26,20 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        arguments?.getString("userEmail")?.let { email ->
+            binding.editTextTextEmailAddress.setText(email)
+        }
+
         binding.button.setOnClickListener {
-            val email = binding.editTextTextEmailAddress.text.toString()
+            val email = binding.editTextTextEmailAddress.text.toString().trim()
             val password = binding.editTextTextPassword.text.toString()
 
             if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(requireContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
+            binding.progressBar.visibility = View.VISIBLE
             viewModel.login(email, password)
         }
 
@@ -43,14 +48,22 @@ class LoginFragment : Fragment() {
         }
 
         viewModel.loginResult.observe(viewLifecycleOwner) { success ->
-            if (success) {
-                val email = binding.editTextTextEmailAddress.text.toString()
-                val bundle = Bundle().apply {
-                    putString("userEmail", email)
+            binding.progressBar.visibility = View.GONE
+            when (success) {
+                true -> {
+                    Toast.makeText(requireContext(), "Login successful", Toast.LENGTH_SHORT).show()
+                    val email = binding.editTextTextEmailAddress.text.toString().trim()
+                    val bundle = Bundle().apply {
+                        putString("userEmail", email)
+                    }
+                    findNavController().navigate(R.id.action_loginFragment_to_homeFragment, bundle)
                 }
-                findNavController().navigate(R.id.action_loginFragment_to_homeFragment, bundle)
-            } else {
-                Toast.makeText(requireContext(), "Invalid email or password", Toast.LENGTH_SHORT).show()
+                false -> {
+                    Toast.makeText(requireContext(), "Invalid email or password", Toast.LENGTH_SHORT).show()
+                }
+                null -> {
+                    Toast.makeText(requireContext(), "Login failed, please try again", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

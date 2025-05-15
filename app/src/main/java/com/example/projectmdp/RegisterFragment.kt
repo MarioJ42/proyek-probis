@@ -26,19 +26,58 @@ class RegisterFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.button.setOnClickListener {
-            val email = binding.editTextTextEmailAddress.text.toString()
-            val fullName = binding.editTextText.text.toString()
-            val password = binding.editTextTextPassword.text.toString()
-            val pin = binding.editTextTextPin?.text.toString() // Add PIN input
+        viewModel.loginResult.observe(viewLifecycleOwner) { success ->
+            binding.progressBar.visibility = View.GONE
+            when (success) {
+                true -> {
+                    Toast.makeText(requireContext(), "Registration successful, please log in", Toast.LENGTH_SHORT).show()
+                    val email = binding.etEmail.text.toString().trim()
+                    val bundle = Bundle().apply {
+                        putString("userEmail", email)
+                    }
+                    findNavController().navigate(R.id.action_registerFragment_to_loginFragment, bundle)
+                }
+                false -> {
+                    Toast.makeText(requireContext(), "Email already registered", Toast.LENGTH_SHORT).show()
+                }
+                null -> {
+                    Toast.makeText(requireContext(), "Registration failed, please try again", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
 
-            if (email.isEmpty() || fullName.isEmpty() || password.isEmpty() || pin.isEmpty() || pin.length != 6) {
-                Toast.makeText(requireContext(), "Please fill in all fields with a 6-digit PIN", Toast.LENGTH_SHORT).show()
+        binding.btnRegister.setOnClickListener {
+            val fullName = binding.etFullName.text.toString().trim()
+            val email = binding.etEmail.text.toString().trim()
+            val password = binding.etPassword.text.toString()
+            val pin = binding.etPin.text.toString()
+
+            if (fullName.isEmpty() || email.isEmpty() || password.isEmpty() || pin.isEmpty()) {
+                Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            viewModel.register(email, fullName, password, pin) // Update register call
-            Toast.makeText(requireContext(), "Registration successful", Toast.LENGTH_SHORT).show()
+            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                Toast.makeText(requireContext(), "Invalid email format", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (password.length < 6) {
+                Toast.makeText(requireContext(), "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (pin.length != 6 || !pin.all { it.isDigit() }) {
+                Toast.makeText(requireContext(), "PIN must be 6 digits", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            binding.progressBar.visibility = View.VISIBLE
+
+            viewModel.register(email, fullName, password, pin)
+        }
+
+        binding.tvBackToLogin.setOnClickListener {
             findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
         }
     }

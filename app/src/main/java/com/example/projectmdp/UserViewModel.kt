@@ -16,8 +16,8 @@ class UserViewModel(private val repository: UserDao) : ViewModel() {
     private val _balance = MutableLiveData<Double>()
     val balance: LiveData<Double> get() = _balance
 
-    private val _loginResult = MutableLiveData<Boolean>()
-    val loginResult: LiveData<Boolean> get() = _loginResult
+    private val _loginResult = MutableLiveData<Boolean?>()
+    val loginResult: LiveData<Boolean?> get() = _loginResult
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
@@ -45,8 +45,22 @@ class UserViewModel(private val repository: UserDao) : ViewModel() {
 
     fun register(email: String, fullName: String, password: String, pin: String) {
         viewModelScope.launch {
-            val user = User(fullName = fullName, email = email, password = password, pin = pin)
-            repository.insertUser(user)
+            try {
+                val existingUser = repository.getUserByEmail(email)
+                if (existingUser != null) {
+                    Log.d("UserViewModel", "Email already exists: $email")
+                    _loginResult.postValue(false)
+                    return@launch
+                }
+                val user = User(fullName = fullName, email = email, password = password, pin = pin)
+                Log.d("UserViewModel", "Inserting user: $email")
+                repository.insertUser(user)
+                Log.d("UserViewModel", "User registered: $email")
+                _loginResult.postValue(true)
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Registration error: ${e.message}")
+                _loginResult.postValue(null)
+            }
         }
     }
 
