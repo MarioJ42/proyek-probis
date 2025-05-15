@@ -1,183 +1,146 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#6200EA">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#6200EA"
-        android:padding="16dp"
-        tools:context=".TransferFragment">
+    <TextView
+        android:id="@+id/transferTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Transfer"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp" />
 
-        <!-- Back Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Back"
-            android:textColor="@android:color/white"
-            app:backgroundTint="@android:color/darker_gray"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            android:layout_marginTop="16dp" />
+    <!-- Back Button -->
+    <Button
+        android:id="@+id/backButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Back"
+        android:backgroundTint="#B0BEC5"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="48dp" />
 
-        <!-- Transfer Title -->
+    <!-- Spinner for Premium Users -->
+    <Spinner
+        android:id="@+id/transferTypeSpinner"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/transferTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp" />
+
+    <!-- To User Form -->
+    <LinearLayout
+        android:id="@+id/toUserForm"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="visible"
+        app:layout_constraintTop_toBottomOf="@id/transferTypeSpinner"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp">
+
         <TextView
-            android:id="@+id/textViewTransferTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Transfer"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/white"
-            app:layout_constraintTop_toBottomOf="@id/btnBack"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="16dp" />
+            android:text="To User"
+            android:textColor="#FFFFFF" />
 
-        <!-- Transfer Type Spinner -->
-        <Spinner
-            android:id="@+id/transferTypeSpinner"
-            android:layout_width="0dp"
+        <EditText
+            android:id="@+id/recipientEmail"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="@android:color/white"
-            app:layout_constraintTop_toBottomOf="@id/textViewTransferTitle"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="16dp" />
+            android:hint="Recipient Email"
+            android:background="@android:color/white"
+            android:textColor="#000000"
+            android:layout_marginTop="8dp" />
 
-        <!-- Recipient Input -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/recipientInputLayout"
-            android:layout_width="0dp"
+        <EditText
+            android:id="@+id/amount"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toBottomOf="@id/transferTypeSpinner"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="16dp">
+            android:hint="Amount"
+            android:background="@android:color/white"
+            android:textColor="#000000"
+            android:inputType="numberDecimal"
+            android:layout_marginTop="8dp" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/inputRecipient"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Recipient Email"
-                android:inputType="textEmailAddress"
-                android:textColor="@android:color/white"
-                android:textColorHint="@android:color/white" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Amount Input -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/amountInputLayout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            app:layout_constraintTop_toBottomOf="@id/recipientInputLayout"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="16dp">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/inputAmount"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Amount"
-                android:inputType="numberDecimal"
-                android:textColor="@android:color/white"
-                android:textColorHint="@android:color/white" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Transfer Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnTransfer"
-            android:layout_width="0dp"
+        <Button
+            android:id="@+id/transferButton"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Transfer"
-            android:textColor="@android:color/white"
-            app:backgroundTint="#03DAC6"
-            app:layout_constraintTop_toBottomOf="@id/amountInputLayout"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="24dp"
-            app:cornerRadius="8dp" />
+            android:backgroundTint="#26A69A"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="16dp" />
+    </LinearLayout>
 
-        <!-- Bank Transfer Section (Visible for Premium Users) -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/bankTransferLayout"
-            android:layout_width="0dp"
+    <!-- Bank Transfer Form -->
+    <LinearLayout
+        android:id="@+id/bankTransferForm"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/transferTypeSpinner"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/btnTransfer"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="24dp">
+            android:text="Bank Transfer (Premium)"
+            android:textColor="#FFFFFF" />
 
-            <!-- Bank Transfer Title -->
-            <TextView
-                android:id="@+id/textViewBankTransferTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Bank Transfer (Premium)"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+        <EditText
+            android:id="@+id/bankAccountNumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Bank Account Number"
+            android:background="@android:color/white"
+            android:textColor="#000000"
+            android:layout_marginTop="8dp" />
 
-            <!-- Bank Account Input -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/bankAccountInputLayout"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:layout_constraintTop_toBottomOf="@id/textViewBankTransferTitle"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="16dp">
+        <EditText
+            android:id="@+id/bankAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Amount"
+            android:background="@android:color/white"
+            android:textColor="#000000"
+            android:inputType="numberDecimal"
+            android:layout_marginTop="8dp" />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/inputBankAccount"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Bank Account Number"
-                    android:inputType="number"
-                    android:textColor="@android:color/white"
-                    android:textColorHint="@android:color/white" />
-            </com.google.android.material.textfield.TextInputLayout>
+        <Button
+            android:id="@+id/bankTransferButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bank Transfer"
+            android:backgroundTint="#AB47BC"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="16dp" />
+    </LinearLayout>
 
-            <!-- Bank Amount Input -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/bankAmountInputLayout"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:layout_constraintTop_toBottomOf="@id/bankAccountInputLayout"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="16dp">
+    <!-- Bottom Navigation -->
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/inputBankAmount"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Amount"
-                    android:inputType="numberDecimal"
-                    android:textColor="@android:color/white"
-                    android:textColorHint="@android:color/white" />
-            </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Bank Transfer Button -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnBankTransfer"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="Bank Transfer"
-                android:textColor="@android:color/white"
-                app:backgroundTint="#BB86FC"
-                app:layout_constraintTop_toBottomOf="@id/bankAmountInputLayout"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="24dp"
-                app:cornerRadius="8dp" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
-</layout>
+</androidx.constraintlayout.widget.ConstraintLayout>

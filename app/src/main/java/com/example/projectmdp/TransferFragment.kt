@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -14,11 +15,10 @@ import com.example.projectmdp.databinding.FragmentTransferBinding
 class TransferFragment : Fragment() {
     private var _binding: FragmentTransferBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: UserViewModel by viewModels { UserViewModelFactory(requireContext()) }
+    private val viewModel: UserViewModel by viewModels { UserViewModelFactory() }
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentTransferBinding.inflate(inflater, container, false)
@@ -29,65 +29,89 @@ class TransferFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val userEmail = arguments?.getString("userEmail") ?: ""
-        if (userEmail.isEmpty()) {
-            Toast.makeText(requireContext(), "User email not found", Toast.LENGTH_SHORT).show()
-            findNavController().navigateUp()
-            return
-        }
-
-        // Fetch user to check premium status
         viewModel.fetchUser(userEmail)
+
         viewModel.user.observe(viewLifecycleOwner) { user ->
-            binding.bankTransferLayout.visibility = if (user?.premium == true) View.VISIBLE else View.GONE
+            if (user != null) {
+                setupTransferOptions(user.premium, userEmail)
+            }
         }
 
-        // Setup spinner for transfer types
-        val transferOptions = arrayOf("To User", "To Bank")
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, transferOptions)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.transferTypeSpinner.adapter = adapter
+        binding.backButton.setOnClickListener {
+            findNavController().popBackStack()
+        }
+    }
 
-        // Back button
-        binding.btnBack.setOnClickListener {
-            val bundle = Bundle().apply { putString("userEmail", userEmail) }
-            findNavController().navigate(R.id.action_transferFragment_to_homeFragment, bundle)
+    private fun setupTransferOptions(isPremium: Boolean, userEmail: String) {
+        if (isPremium) {
+            binding.transferTypeSpinner.visibility = View.VISIBLE
+            val options = arrayOf("To User", "Bank Transfer")
+            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, options)
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            binding.transferTypeSpinner.adapter = adapter
+
+            binding.transferTypeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    when (options[position]) {
+                        "To User" -> {
+                            binding.toUserForm.visibility = View.VISIBLE
+                            binding.bankTransferForm.visibility = View.GONE
+                        }
+                        "Bank Transfer" -> {
+                            binding.toUserForm.visibility = View.GONE
+                            binding.bankTransferForm.visibility = View.VISIBLE
+                        }
+                        else -> {
+                            binding.toUserForm.visibility = View.VISIBLE
+                            binding.bankTransferForm.visibility = View.GONE
+                        }
+                    }
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                    binding.toUserForm.visibility = View.VISIBLE
+                    binding.bankTransferForm.visibility = View.GONE
+                }
+            }
+
+            // Default to To User
+            binding.transferTypeSpinner.setSelection(0)
+        } else {
+            binding.transferTypeSpinner.visibility = View.GONE
+            binding.toUserForm.visibility = View.VISIBLE
+            binding.bankTransferForm.visibility = View.GONE
         }
 
-        // Transfer button
-        binding.btnTransfer.setOnClickListener {
-            val transferType = binding.transferTypeSpinner.selectedItem.toString()
-            val recipient = binding.inputRecipient.text.toString().trim()
-            val amount = binding.inputAmount.text.toString().toDoubleOrNull()
-
-            if (recipient.isEmpty() || amount == null || amount <= 0) {
-                Toast.makeText(requireContext(), "Please fill in all fields with valid values", Toast.LENGTH_SHORT).show()
+        binding.transferButton.setOnClickListener {
+            val recipientEmail = binding.recipientEmail.text.toString().trim()
+            val amount = binding.amount.text.toString().toDoubleOrNull() ?: 0.0
+            if (recipientEmail.isEmpty() || amount <= 0) {
+                Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             val bundle = Bundle().apply {
                 putString("userEmail", userEmail)
-                putString("recipient", recipient)
-                putFloat("amount", amount.toFloat()) // Ubah dari putDouble ke putFloat
-                putString("transferType", transferType)
+                putString("recipient", recipientEmail)
+                putFloat("amount", amount.toFloat())
+                putString("transferType", "toUser")
             }
             findNavController().navigate(R.id.action_transferFragment_to_pinVerificationFragment, bundle)
         }
 
-        // Bank Transfer button
-        binding.btnBankTransfer.setOnClickListener {
-            val bankAccount = binding.inputBankAccount.text.toString().trim()
-            val amount = binding.inputBankAmount.text.toString().toDoubleOrNull()
-
-            if (bankAccount.isEmpty() || amount == null || amount <= 0) {
-                Toast.makeText(requireContext(), "Please fill in all fields with valid values", Toast.LENGTH_SHORT).show()
+        binding.bankTransferButton.setOnClickListener {
+            val bankAccount = binding.bankAccountNumber.text.toString().trim()
+            val amount = binding.bankAmount.text.toString().toDoubleOrNull() ?: 0.0
+            if (bankAccount.isEmpty() || amount <= 0) {
+                Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             val bundle = Bundle().apply {
                 putString("userEmail", userEmail)
                 putString("bankAccount", bankAccount)
-                putFloat("amount", amount.toFloat()) // Ubah dari putDouble ke putFloat
-                putString("transferType", "To Bank")
+                putFloat("amount", amount.toFloat())
+                putString("transferType", "bankTransfer")
             }
             findNavController().navigate(R.id.action_transferFragment_to_pinVerificationFragment, bundle)
         }

@@ -1,15 +1,13 @@
 package com.example.projectmdp
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import com.google.firebase.firestore.PropertyName
 
-@Entity(tableName = "users")
-data class  User(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val fullName: String,
-    val email: String,
-    val password: String,
-    var balance: Double = 0.0,
-    var premium: Boolean = false,
-    val pin: String
+data class User(
+    @PropertyName("id") val id: String = "", // Firestore document ID
+    @PropertyName("fullName") val fullName: String = "",
+    @PropertyName("email") val email: String = "",
+    @PropertyName("password") val password: String = "", // Note: Avoid storing passwords if using Firebase Auth
+    @PropertyName("balance") val balance: Double = 0.0,
+    @PropertyName("premium") val premium: Boolean = false,
+    @PropertyName("pin") val pin: String = ""
 )

@@ -13,7 +13,7 @@ import com.example.projectmdp.databinding.FragmentLoginBinding
 class LoginFragment : Fragment() {
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: UserViewModel by viewModels { UserViewModelFactory(requireContext()) }
+    private val viewModel: UserViewModel by viewModels { UserViewModelFactory() }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -33,12 +33,10 @@ class LoginFragment : Fragment() {
         binding.button.setOnClickListener {
             val email = binding.editTextTextEmailAddress.text.toString().trim()
             val password = binding.editTextTextPassword.text.toString()
-
             if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-
             binding.progressBar.visibility = View.VISIBLE
             viewModel.login(email, password)
         }
@@ -53,17 +51,11 @@ class LoginFragment : Fragment() {
                 true -> {
                     Toast.makeText(requireContext(), "Login successful", Toast.LENGTH_SHORT).show()
                     val email = binding.editTextTextEmailAddress.text.toString().trim()
-                    val bundle = Bundle().apply {
-                        putString("userEmail", email)
-                    }
+                    val bundle = Bundle().apply { putString("userEmail", email) }
                     findNavController().navigate(R.id.action_loginFragment_to_homeFragment, bundle)
                 }
-                false -> {
-                    Toast.makeText(requireContext(), "Invalid email or password", Toast.LENGTH_SHORT).show()
-                }
-                null -> {
-                    Toast.makeText(requireContext(), "Login failed, please try again", Toast.LENGTH_SHORT).show()
-                }
+                false -> Toast.makeText(requireContext(), "Invalid email or password", Toast.LENGTH_SHORT).show()
+                null -> Toast.makeText(requireContext(), "Login failed, please try again", Toast.LENGTH_SHORT).show()
             }
         }
     }

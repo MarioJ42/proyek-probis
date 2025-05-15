@@ -13,7 +13,7 @@ import com.example.projectmdp.databinding.FragmentProfileBinding
 class ProfileFragment : Fragment() {
     private var _binding: FragmentProfileBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: UserViewModel by viewModels { UserViewModelFactory(requireContext()) }
+    private val viewModel: UserViewModel by viewModels { UserViewModelFactory()}
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -38,6 +38,7 @@ class ProfileFragment : Fragment() {
             if (user != null) {
                 binding.editTextText3.setText(user.fullName)
                 binding.editTextText2.setText(user.email)
+
                 binding.editTextText.setText("081234567890") // Placeholder
                 binding.buttonPremium.isEnabled = !user.premium // Disable if already premium
                 binding.buttonPremium.text = if (user.premium) "Premium Activated" else "Get Premium"

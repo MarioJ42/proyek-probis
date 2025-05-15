@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "893734401234",
+    "project_id": "projectmdp-7ffa8",
+    "storage_bucket": "projectmdp-7ffa8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:893734401234:android:30c885ddd23d67a60b690b",
+        "android_client_info": {
+          "package_name": "com.example.projectmdp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBm50uuunqCtNA284Lz7PGAvDqnf1veKec"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

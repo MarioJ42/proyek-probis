@@ -13,7 +13,7 @@ import com.example.projectmdp.databinding.FragmentTopUpBinding
 class TopUpFragment : Fragment() {
     private var _binding: FragmentTopUpBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: UserViewModel by viewModels { UserViewModelFactory(requireContext()) }
+    private val viewModel: UserViewModel by viewModels { UserViewModelFactory() }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

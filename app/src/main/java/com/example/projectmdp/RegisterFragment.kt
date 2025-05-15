@@ -13,7 +13,7 @@ import com.example.projectmdp.databinding.FragmentRegisterBinding
 class RegisterFragment : Fragment() {
     private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: UserViewModel by viewModels { UserViewModelFactory(requireContext()) }
+    private val viewModel: UserViewModel by viewModels { UserViewModelFactory() }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -32,17 +32,11 @@ class RegisterFragment : Fragment() {
                 true -> {
                     Toast.makeText(requireContext(), "Registration successful, please log in", Toast.LENGTH_SHORT).show()
                     val email = binding.etEmail.text.toString().trim()
-                    val bundle = Bundle().apply {
-                        putString("userEmail", email)
-                    }
+                    val bundle = Bundle().apply { putString("userEmail", email) }
                     findNavController().navigate(R.id.action_registerFragment_to_loginFragment, bundle)
                 }
-                false -> {
-                    Toast.makeText(requireContext(), "Email already registered", Toast.LENGTH_SHORT).show()
-                }
-                null -> {
-                    Toast.makeText(requireContext(), "Registration failed, please try again", Toast.LENGTH_SHORT).show()
-                }
+                false -> Toast.makeText(requireContext(), "Email already registered", Toast.LENGTH_SHORT).show()
+                null -> Toast.makeText(requireContext(), "Registration failed, please try again", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -56,24 +50,20 @@ class RegisterFragment : Fragment() {
                 Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-
             if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 Toast.makeText(requireContext(), "Invalid email format", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-
             if (password.length < 6) {
                 Toast.makeText(requireContext(), "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-
             if (pin.length != 6 || !pin.all { it.isDigit() }) {
                 Toast.makeText(requireContext(), "PIN must be 6 digits", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             binding.progressBar.visibility = View.VISIBLE
-
             viewModel.register(email, fullName, password, pin)
         }
 

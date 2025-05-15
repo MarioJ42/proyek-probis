@@ -1,15 +1,20 @@
 package com.example.projectmdp
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
-class UserViewModel(private val repository: UserDao) : ViewModel() {
+class UserViewModel : ViewModel() {
+    private val db = Firebase.firestore
+    private val usersCollection = db.collection("users")
+
     private val _user = MutableLiveData<User?>()
     val user: LiveData<User?> get() = _user
 
@@ -21,40 +26,66 @@ class UserViewModel(private val repository: UserDao) : ViewModel() {
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
-            val user = repository.getUserByEmail(email)
-            if (user != null && user.password == password) {
-                _user.postValue(user)
-                _balance.postValue(user.balance)
-                _loginResult.postValue(true)
-            } else {
-                _loginResult.postValue(false)
+            try {
+                val snapshot = usersCollection.whereEqualTo("email", email).get().await()
+                if (snapshot.isEmpty) {
+                    _loginResult.postValue(false)
+                    return@launch
+                }
+                val user = snapshot.documents[0].toObject(User::class.java)
+                if (user?.password == password) {
+                    _user.postValue(user)
+                    _balance.postValue(user.balance)
+                    _loginResult.postValue(true)
+                } else {
+                    _loginResult.postValue(false)
+                }
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Login error: ${e.message}")
+                _loginResult.postValue(null)
             }
         }
     }
 
     fun fetchUser(email: String) {
         viewModelScope.launch {
-            val user = repository.getUserByEmail(email)
-            _user.postValue(user)
-            user?.let {
-                _balance.postValue(it.balance)
-                Log.d("UserViewModel", "fetchUser: Email = $email, Balance = ${it.balance}")
-            } ?: Log.e("UserViewModel", "fetchUser: User not found for email = $email")
+            try {
+                val snapshot = usersCollection.whereEqualTo("email", email).get().await()
+                if (!snapshot.isEmpty) {
+                    val user = snapshot.documents[0].toObject(User::class.java)?.copy(id = snapshot.documents[0].id)
+                    _user.postValue(user)
+                    user?.let {
+                        _balance.postValue(it.balance)
+                        Log.d("UserViewModel", "fetchUser: Email = $email, Balance = ${it.balance}")
+                    }
+                } else {
+                    Log.e("UserViewModel", "fetchUser: User not found for email = $email")
+                    _user.postValue(null)
+                }
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "fetchUser error: ${e.message}")
+                _user.postValue(null)
+            }
         }
     }
 
     fun register(email: String, fullName: String, password: String, pin: String) {
         viewModelScope.launch {
             try {
-                val existingUser = repository.getUserByEmail(email)
-                if (existingUser != null) {
+                val snapshot = usersCollection.whereEqualTo("email", email).get().await()
+                if (!snapshot.isEmpty) {
                     Log.d("UserViewModel", "Email already exists: $email")
                     _loginResult.postValue(false)
                     return@launch
                 }
-                val user = User(fullName = fullName, email = email, password = password, pin = pin)
-                Log.d("UserViewModel", "Inserting user: $email")
-                repository.insertUser(user)
+                val user = User(
+                    id = "", // Will be set by Firestore
+                    fullName = fullName,
+                    email = email,
+                    password = password,
+                    pin = pin
+                )
+                val docRef = usersCollection.add(user).await()
                 Log.d("UserViewModel", "User registered: $email")
                 _loginResult.postValue(true)
             } catch (e: Exception) {
@@ -66,80 +97,158 @@ class UserViewModel(private val repository: UserDao) : ViewModel() {
 
     fun updateUserProfile(email: String, fullName: String, newEmail: String) {
         viewModelScope.launch {
-            val user = repository.getUserByEmail(email)
-            if (user != null) {
-                val updatedUser = user.copy(fullName = fullName, email = newEmail)
-                repository.updateUser(updatedUser)
-                fetchUser(newEmail)
+            try {
+                val snapshot = usersCollection.whereEqualTo("email", email).get().await()
+                if (!snapshot.isEmpty) {
+                    val docId = snapshot.documents[0].id
+                    usersCollection.document(docId).update(
+                        mapOf(
+                            "fullName" to fullName,
+                            "email" to newEmail
+                        )
+                    ).await()
+                    fetchUser(newEmail)
+                }
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Update profile error: ${e.message}")
             }
         }
     }
 
     fun topUp(email: String, amount: Double) {
         viewModelScope.launch {
-            val user = repository.getUserByEmail(email)
-            if (user != null) {
-                val updatedUser = user.copy(balance = user.balance + amount)
-                repository.updateUser(updatedUser)
-                fetchUser(email)
+            try {
+                val snapshot = usersCollection.whereEqualTo("email", email).get().await()
+                if (!snapshot.isEmpty) {
+                    val docId = snapshot.documents[0].id
+                    val currentBalance = snapshot.documents[0].toObject(User::class.java)?.balance ?: 0.0
+                    usersCollection.document(docId).update("balance", currentBalance + amount).await()
+                    fetchUser(email)
+                }
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Top-up error: ${e.message}")
             }
         }
     }
 
     fun transfer(fromEmail: String, toEmail: String, amount: Double, onResult: (String?) -> Unit) {
+        Log.d("UserViewModel", "Starting transfer: from=$fromEmail, to=$toEmail, amount=$amount")
         viewModelScope.launch {
             try {
-                repository.transfer(fromEmail, toEmail, amount)
+                val fromSnapshot = usersCollection.whereEqualTo("email", fromEmail).get().await()
+                val toSnapshot = usersCollection.whereEqualTo("email", toEmail).get().await()
+
+                if (fromSnapshot.isEmpty || toSnapshot.isEmpty) {
+                    throw IllegalArgumentException("Sender or recipient not found")
+                }
+
+                val fromDoc = fromSnapshot.documents[0]
+                val toDoc = toSnapshot.documents[0]
+                val sender = fromDoc.toObject(User::class.java)
+                val recipient = toDoc.toObject(User::class.java)
+
+                if (sender == null || recipient == null) {
+                    throw IllegalArgumentException("Sender or recipient not found")
+                }
+
+                if (sender.balance < amount) {
+                    throw IllegalArgumentException("Insufficient balance")
+                }
+
+                db.runTransaction { transaction ->
+                    transaction.update(fromDoc.reference, "balance", sender.balance - amount)
+                    transaction.update(toDoc.reference, "balance", recipient.balance + amount)
+                }.await()
+
+                val transaksi = Transaksi(
+                    userEmail = fromEmail,
+                    type = "Transfer",
+                    recipient = toEmail,
+                    amount = amount,
+                    timestamp = com.google.firebase.Timestamp.now(),
+                    status = "Completed"
+                )
+                logTransaction(transaksi)
+
                 fetchUser(fromEmail)
-                Log.d("UserViewModel", "Transfer: New sender balance = ${_user.value?.balance}")
+                Log.d("UserViewModel", "Transfer successful: New sender balance = ${_user.value?.balance}")
                 onResult(null)
-            } catch (e: IllegalArgumentException) {
+            } catch (e: Exception) {
                 Log.e("UserViewModel", "Transfer failed: ${e.message}")
                 onResult(e.message)
             }
         }
     }
 
-    fun transferToBank(fromEmail: String, bankAccount: String, amount: Double, onResult: (String?) -> Unit) {
+    fun transferToBank(userEmail: String, bankAccount: String, amount: Double, onResult: (String?) -> Unit) {
         viewModelScope.launch {
             try {
-                val user = repository.getUserByEmail(fromEmail)
-                if (user == null) {
+                val userSnapshot = usersCollection.whereEqualTo("email", userEmail).get().await()
+                if (userSnapshot.isEmpty) {
                     throw IllegalArgumentException("User not found")
                 }
-                if (user.balance < amount) {
+
+                val userDoc = userSnapshot.documents[0]
+                val user = userDoc.toObject(User::class.java)
+                if (user == null || user.balance < amount) {
                     throw IllegalArgumentException("Insufficient balance")
                 }
-                val updatedUser = user.copy(balance = user.balance - amount)
-                repository.updateUser(updatedUser)
-                fetchUser(fromEmail)
-                Log.d("UserViewModel", "TransferToBank: New balance = ${_user.value?.balance}")
+
+                db.runTransaction { transaction ->
+                    transaction.update(userDoc.reference, "balance", user.balance - amount)
+                }.await()
+
+                val transaksi = Transaksi(
+                    userEmail = userEmail,
+                    type = "Bank Transfer",
+                    recipient = bankAccount,
+                    amount = amount,
+                    timestamp = com.google.firebase.Timestamp.now(),
+                    status = "Completed"
+                )
+                logTransaction(transaksi)
+
+                fetchUser(userEmail)
+                Log.d("UserViewModel", "Bank transfer successful: New balance = ${_user.value?.balance}")
                 onResult(null)
-            } catch (e: IllegalArgumentException) {
-                Log.e("UserViewModel", "TransferToBank failed: ${e.message}")
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Bank transfer failed: ${e.message}")
                 onResult(e.message)
             }
         }
     }
 
+
+    fun logTransaction(transaksi: Transaksi) {
+        db.collection("transactions")
+            .add(transaksi)
+            .addOnSuccessListener { Log.d("UserViewModel", "Transaction logged: ${transaksi}") }
+            .addOnFailureListener { e -> Log.e("UserViewModel", "Failed to log transaction: ${e.message}") }
+    }
+
+
+
     fun setPremiumStatus(email: String) {
         viewModelScope.launch {
-            val user = repository.getUserByEmail(email)
-            if (user != null) {
-                val updatedUser = user.copy(premium = true)
-                repository.updateUser(updatedUser)
-                fetchUser(email)
+            try {
+                val snapshot = usersCollection.whereEqualTo("email", email).get().await()
+                if (!snapshot.isEmpty) {
+                    val docId = snapshot.documents[0].id
+                    usersCollection.document(docId).update("premium", true).await()
+                    fetchUser(email)
+                }
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Set premium error: ${e.message}")
             }
         }
     }
 }
 
-class UserViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
+class UserViewModelFactory : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(UserViewModel::class.java)) {
-            val repository = AppDatabase.getInstance(context).userDao()
             @Suppress("UNCHECKED_CAST")
-            return UserViewModel(repository) as T
+            return UserViewModel() as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
