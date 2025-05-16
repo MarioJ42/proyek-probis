@@ -45,8 +45,8 @@ class RegisterFragment : Fragment() {
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString()
             val pin = binding.etPin.text.toString()
-
-            if (fullName.isEmpty() || email.isEmpty() || password.isEmpty() || pin.isEmpty()) {
+            val phone = binding.etNotelp.text.toString()
+            if (fullName.isEmpty() || email.isEmpty() || password.isEmpty() || pin.isEmpty() || phone.isEmpty()) {
                 Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
@@ -62,9 +62,13 @@ class RegisterFragment : Fragment() {
                 Toast.makeText(requireContext(), "PIN must be 6 digits", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            if(phone.length <=10 || !phone.all { it.isDigit() }){
+                Toast.makeText(requireContext(), "Phone Number must be 10 or above digits", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
             binding.progressBar.visibility = View.VISIBLE
-            viewModel.register(email, fullName, password, pin)
+            viewModel.register(email, fullName, password, pin, phone)
         }
 
         binding.tvBackToLogin.setOnClickListener {

@@ -104,7 +104,7 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    fun register(email: String, fullName: String, password: String, pin: String) {
+    fun register(email: String, fullName: String, password: String, pin: String, phone: String) {
         viewModelScope.launch {
             try {
                 val snapshot = usersCollection.whereEqualTo("email", email).get().await()
@@ -120,7 +120,8 @@ class UserViewModel : ViewModel() {
                     password = password,
                     pin = pin,
                     role = 0,
-                    status = "active"
+                    status = "active",
+                    phone = phone
                 )
                 val docRef = usersCollection.add(user).await()
                 Log.d("UserViewModel", "User registered: $email")
