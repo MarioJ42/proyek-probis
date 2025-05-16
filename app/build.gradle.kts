@@ -82,6 +82,11 @@ dependencies {
     implementation("com.squareup.moshi:moshi:1.15.2")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.2")
     kapt("com.squareup.moshi:moshi-kotlin-codegen:1.15.2")
+
+    implementation ("androidx.appcompat:appcompat:1.7.0")
+    implementation ("com.google.android.material:material:1.12.0")
+
+
     // Tambah ini
     implementation(libs.androidx.room.runtime)
     kapt(libs.androidx.room.compiler)

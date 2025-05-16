@@ -27,6 +27,34 @@ class UserViewModel : ViewModel() {
     private val _topUpResult = MutableLiveData<Boolean>()
     val topUpResult: LiveData<Boolean> get() = _topUpResult
 
+    init {
+        // Create admin user if not exists
+        createAdminUser()
+    }
+
+    private fun createAdminUser() {
+        viewModelScope.launch {
+            try {
+                val snapshot = usersCollection.whereEqualTo("email", "william@gmail.com").get().await()
+                if (snapshot.isEmpty) {
+                    val adminUser = User(
+                        id = "",
+                        fullName = "William",
+                        email = "william@gmail.com",
+                        password = "william",
+                        pin = "123456",
+                        role = 1,
+                        status = "active"
+                    )
+                    usersCollection.add(adminUser).await()
+                    Log.d("UserViewModel", "Admin user created: william@gmail.com")
+                }
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Failed to create admin user: ${e.message}")
+            }
+        }
+    }
+
     fun login(email: String, password: String) {
         viewModelScope.launch {
             try {
@@ -48,6 +76,10 @@ class UserViewModel : ViewModel() {
                 _loginResult.postValue(null)
             }
         }
+    }
+
+    fun clearLoginResult() {
+        _loginResult.postValue(null)
     }
 
     fun fetchUser(email: String) {
@@ -82,11 +114,13 @@ class UserViewModel : ViewModel() {
                     return@launch
                 }
                 val user = User(
-                    id = "", // Will be set by Firestore
+                    id = "",
                     fullName = fullName,
                     email = email,
                     password = password,
-                    pin = pin
+                    pin = pin,
+                    role = 0,
+                    status = "active"
                 )
                 val docRef = usersCollection.add(user).await()
                 Log.d("UserViewModel", "User registered: $email")
@@ -127,7 +161,6 @@ class UserViewModel : ViewModel() {
                     val currentBalance = snapshot.documents[0].toObject(User::class.java)?.balance ?: 0.0
                     usersCollection.document(docId).update("balance", currentBalance + amount).await()
 
-                    // Log the top-up transaction
                     val transaksi = Transaksi(
                         userEmail = email,
                         type = "TopUp Saldo",

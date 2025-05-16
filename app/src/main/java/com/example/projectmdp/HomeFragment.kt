@@ -39,7 +39,13 @@ class HomeFragment : Fragment() {
 
         viewModel.user.observe(viewLifecycleOwner) { user ->
             if (user != null) {
-                binding.username.text = "Hello, ${user.fullName}!" + if (user.premium) " (Premium)" else ""
+                // Check role for admin greeting
+                val greeting = if (user.role == 1) {
+                    "Hello Admin, ${user.fullName}!"
+                } else {
+                    "Hello, ${user.fullName}!" + if (user.premium) " (Premium)" else ""
+                }
+                binding.username.text = greeting
             } else {
                 findNavController().navigate(R.id.action_homeFragment_to_loginFragment)
             }
