@@ -1,33 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    <androidx.constraintlayout.widget.ConstraintLayout
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/qrUrlEditText"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#6200EA"
-        android:padding="16dp">
+        android:layout_height="wrap_content"
+        android:hint="Enter QR URL"
+        android:inputType="textUri" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Back"
-            android:textColor="@android:color/white"
-            app:backgroundTint="@android:color/darker_gray"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+    <Button
+        android:id="@+id/btnUseQrLink"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Use QR Link" />
 
-        <TextView
-            android:id="@+id/tvQrisTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="QRIS Payment"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/white"
-            app:layout_constraintTop_toBottomOf="@id/btnBack"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="16dp" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-</layout>
+    <Button
+        android:id="@+id/btnScanQr"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Scan QR Code" />
+
+    <Button
+        android:id="@+id/btnPickImage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Pick Image" />
+
+    <ImageView
+        android:id="@+id/qrImageView"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:contentDescription="QR Code Image"
+        android:scaleType="centerInside" />
+
+    <TextView
+        android:id="@+id/statusTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Status: Scan a QRIS code"
+        android:textSize="16sp" />
+
+    <Button
+        android:id="@+id/btnValidatePayment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Validate Payment"
+        android:enabled="false" />
+
+    <Button
+        android:id="@+id/btnBack"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Back" />
+
+    <ProgressBar
+        android:id="@+id/loadingProgressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+</LinearLayout>
