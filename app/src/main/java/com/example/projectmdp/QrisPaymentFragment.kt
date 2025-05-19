@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -36,6 +37,8 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.HttpException
 import java.io.File
 import java.io.FileOutputStream
+import java.text.NumberFormat
+import java.util.Locale
 import java.util.UUID
 import java.util.regex.Pattern
 
@@ -149,6 +152,7 @@ class QrisPaymentFragment : Fragment() {
 
         binding.btnValidatePayment.isEnabled = false
         binding.statusTextView.text = "Status: Scan or enter QR code"
+        binding.amountTextView.visibility = View.GONE
 
         binding.btnUseQrLink.setOnClickListener {
             if (!binding.btnUseQrLink.isEnabled) return@setOnClickListener
@@ -290,16 +294,52 @@ class QrisPaymentFragment : Fragment() {
 
             viewLifecycleOwner.lifecycleScope.launch {
                 saveToFirestore(payment)
-                viewModel.simulateQrisPayment(orderId!!, amount!!)
+                val bundle = Bundle().apply {
+                    putString("userEmail", user.email)
+                    putString("orderId", orderId)
+                    putFloat("amount", amount!!.toFloat())
+                    putString("qrString", qrString)
+                    putString("transferType", "qrisPayment")
+                }
+                Log.d("QrisPayment", "Navigating to PinVerificationFragment with amount=${amount!!.toFloat()}")
+                findNavController().navigate(R.id.action_qrisPaymentFragment_to_pinVerificationFragment, bundle)
+                isProcessingPayment = false
+                binding.btnValidatePayment.isEnabled = true
+                binding.loadingProgressBar.visibility = View.GONE
             }
+        }
+
+        setFragmentResultListener("pin_verification_result") { _, bundle ->
+            val success = bundle.getBoolean("success", false)
+            val errorMessage = bundle.getString("errorMessage")
+            if (success) {
+                Log.d("QrisPayment", "PIN verification successful, navigating to HomeFragment")
+                Toast.makeText(context, "Payment successful", Toast.LENGTH_SHORT).show()
+                userEmail?.let { email ->
+                    val navBundle = Bundle().apply { putString("userEmail", email) }
+                    findNavController().navigate(R.id.action_qrisPaymentFragment_to_homeFragment, navBundle)
+                } ?: run {
+                    Log.e("QrisPayment", "userEmail is null, navigating to login")
+                    findNavController().navigate(R.id.action_qrisPaymentFragment_to_loginFragment)
+                }
+            } else {
+                Log.e("QrisPayment", "PIN verification failed: $errorMessage")
+                Toast.makeText(context, "Payment failed: $errorMessage", Toast.LENGTH_LONG).show()
+                orderId = null
+                amount = null
+                binding.statusTextView.text = "Status: Scan or enter QR code"
+                binding.amountTextView.visibility = View.GONE
+                binding.btnValidatePayment.isEnabled = false
+            }
+            isProcessingPayment = false
+            binding.btnValidatePayment.isEnabled = true
+            binding.loadingProgressBar.visibility = View.GONE
         }
 
         binding.btnBack.setOnClickListener {
             userEmail?.let { email ->
-                findNavController().navigate(
-                    R.id.action_qrisPaymentFragment_to_homeFragment,
-                    Bundle().apply { putString("userEmail", email) }
-                )
+                val bundle = Bundle().apply { putString("userEmail", email) }
+                findNavController().navigate(R.id.action_qrisPaymentFragment_to_homeFragment, bundle)
             } ?: run {
                 Toast.makeText(context, "User email not found", Toast.LENGTH_SHORT).show()
                 findNavController().navigate(R.id.action_qrisPaymentFragment_to_loginFragment)
@@ -313,19 +353,20 @@ class QrisPaymentFragment : Fragment() {
 
             when (result) {
                 is SimulationResult.Success -> {
+                    Log.d("QrisPayment", "Simulation successful: ${result.message}")
                     Toast.makeText(context, "Payment successful: ${result.message}", Toast.LENGTH_SHORT).show()
                     userEmail?.let { email ->
-                        findNavController().navigate(
-                            R.id.action_qrisPaymentFragment_to_homeFragment,
-                            Bundle().apply { putString("userEmail", email) }
-                        )
+                        val bundle = Bundle().apply { putString("userEmail", email) }
+                        findNavController().navigate(R.id.action_qrisPaymentFragment_to_homeFragment, bundle)
                     } ?: findNavController().navigate(R.id.action_qrisPaymentFragment_to_loginFragment)
                 }
                 is SimulationResult.Failure -> {
+                    Log.e("QrisPayment", "Simulation failed: ${result.message}")
                     Toast.makeText(context, "Payment failed: ${result.message}", Toast.LENGTH_LONG).show()
                     orderId = null
                     amount = null
                     binding.statusTextView.text = "Status: Scan or enter QR code"
+                    binding.amountTextView.visibility = View.GONE
                 }
             }
         }
@@ -382,6 +423,7 @@ class QrisPaymentFragment : Fragment() {
                                 withContext(Dispatchers.Main) {
                                     if (isAdded) {
                                         Toast.makeText(context, "Invalid QR: No order ID found in Firestore", Toast.LENGTH_LONG).show()
+                                        binding.amountTextView.visibility = View.GONE
                                     }
                                 }
                             }
@@ -389,6 +431,7 @@ class QrisPaymentFragment : Fragment() {
                             withContext(Dispatchers.Main) {
                                 if (isAdded) {
                                     Toast.makeText(context, "No matching QRIS payment found", Toast.LENGTH_LONG).show()
+                                    binding.amountTextView.visibility = View.GONE
                                 }
                             }
                         }
@@ -396,6 +439,7 @@ class QrisPaymentFragment : Fragment() {
                         withContext(Dispatchers.Main) {
                             if (isAdded) {
                                 Toast.makeText(context, "User email not found", Toast.LENGTH_LONG).show()
+                                binding.amountTextView.visibility = View.GONE
                             }
                         }
                     }
@@ -406,6 +450,7 @@ class QrisPaymentFragment : Fragment() {
                     withContext(Dispatchers.Main) {
                         if (isAdded) {
                             Toast.makeText(context, "Invalid QRIS amount", Toast.LENGTH_LONG).show()
+                            binding.amountTextView.visibility = View.GONE
                         }
                     }
                     return
@@ -425,6 +470,7 @@ class QrisPaymentFragment : Fragment() {
                         withContext(Dispatchers.Main) {
                             if (isAdded) {
                                 Toast.makeText(context, "This QR code was recently used. Please scan a new code.", Toast.LENGTH_LONG).show()
+                                binding.amountTextView.visibility = View.GONE
                             }
                         }
                         return
@@ -443,6 +489,7 @@ class QrisPaymentFragment : Fragment() {
                     withContext(Dispatchers.Main) {
                         if (isAdded) {
                             Toast.makeText(context, "User email not found", Toast.LENGTH_LONG).show()
+                            binding.amountTextView.visibility = View.GONE
                         }
                     }
                     return
@@ -451,6 +498,11 @@ class QrisPaymentFragment : Fragment() {
                 withContext(Dispatchers.Main) {
                     if (isAdded) {
                         binding.statusTextView.text = "QR Valid: Order $orderId, Amount $amount"
+                        val formattedAmount = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+                            .format(amount)
+                            .replace("IDR", "Rp ")
+                        binding.amountTextView.text = "Amount: $formattedAmount"
+                        binding.amountTextView.visibility = View.VISIBLE
                         binding.btnValidatePayment.isEnabled = true
                     }
                 }
@@ -458,6 +510,7 @@ class QrisPaymentFragment : Fragment() {
                 withContext(Dispatchers.Main) {
                     if (isAdded) {
                         Toast.makeText(context, "Unsupported QR format: $qrContent", Toast.LENGTH_LONG).show()
+                        binding.amountTextView.visibility = View.GONE
                     }
                 }
             }
@@ -465,6 +518,7 @@ class QrisPaymentFragment : Fragment() {
             withContext(Dispatchers.Main) {
                 if (isAdded) {
                     Toast.makeText(context, "Error parsing QR: ${e.message}", Toast.LENGTH_LONG).show()
+                    binding.amountTextView.visibility = View.GONE
                 }
             }
             Log.e("QrisPayment", "QR parsing error: ${e.message}", e)
@@ -486,6 +540,7 @@ class QrisPaymentFragment : Fragment() {
                                 this@QrisPaymentFragment.orderId = null
                                 this@QrisPaymentFragment.amount = null
                                 binding.statusTextView.text = "Status: Invalid QR"
+                                binding.amountTextView.visibility = View.GONE
                                 binding.btnValidatePayment.isEnabled = false
                             }
                         }
@@ -494,6 +549,11 @@ class QrisPaymentFragment : Fragment() {
                     withContext(Dispatchers.Main) {
                         if (isAdded && view != null) {
                             binding.statusTextView.text = "QR Valid: Order $orderId, Amount $amount"
+                            val formattedAmount = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+                                .format(amount)
+                                .replace("IDR", "Rp ")
+                            binding.amountTextView.text = "Amount: $formattedAmount"
+                            binding.amountTextView.visibility = View.VISIBLE
                             binding.btnValidatePayment.isEnabled = true
                         }
                     }
@@ -514,6 +574,7 @@ class QrisPaymentFragment : Fragment() {
                             this@QrisPaymentFragment.orderId = null
                             this@QrisPaymentFragment.amount = null
                             binding.statusTextView.text = "Status: Invalid QR"
+                            binding.amountTextView.visibility = View.GONE
                             binding.btnValidatePayment.isEnabled = false
                         }
                     }
@@ -532,6 +593,7 @@ class QrisPaymentFragment : Fragment() {
                         this@QrisPaymentFragment.orderId = null
                         this@QrisPaymentFragment.amount = null
                         binding.statusTextView.text = "Status: Verification failed"
+                        binding.amountTextView.visibility = View.GONE
                         binding.btnValidatePayment.isEnabled = false
                     }
                 }
@@ -547,6 +609,7 @@ class QrisPaymentFragment : Fragment() {
                         this@QrisPaymentFragment.orderId = null
                         this@QrisPaymentFragment.amount = null
                         binding.statusTextView.text = "Status: Verification failed"
+                        binding.amountTextView.visibility = View.GONE
                         binding.btnValidatePayment.isEnabled = false
                     }
                 }
@@ -605,18 +668,22 @@ class QrisPaymentFragment : Fragment() {
                             }
                         } else {
                             Toast.makeText(context, "No QR code detected in image", Toast.LENGTH_SHORT).show()
+                            binding.amountTextView.visibility = View.GONE
                         }
                     } else {
                         Toast.makeText(context, "No QR code detected in image", Toast.LENGTH_SHORT).show()
+                        binding.amountTextView.visibility = View.GONE
                     }
                 }
                 .addOnFailureListener { e ->
                     Toast.makeText(context, "Failed to process image: ${e.message}", Toast.LENGTH_SHORT).show()
                     Log.e("QrisPayment", "Image processing error: ${e.message}", e)
+                    binding.amountTextView.visibility = View.GONE
                 }
         } catch (e: Exception) {
             Toast.makeText(context, "Error processing image: ${e.message}", Toast.LENGTH_SHORT).show()
             Log.e("QrisPayment", "Image processing error: ${e.message}", e)
+            binding.amountTextView.visibility = View.GONE
         }
     }
 
@@ -653,6 +720,7 @@ class QrisPaymentFragment : Fragment() {
                     withContext(Dispatchers.Main) {
                         if (isAdded) {
                             Toast.makeText(context, "Failed to decode image", Toast.LENGTH_SHORT).show()
+                            binding.amountTextView.visibility = View.GONE
                         }
                     }
                 }
@@ -660,6 +728,7 @@ class QrisPaymentFragment : Fragment() {
                 withContext(Dispatchers.Main) {
                     if (isAdded) {
                         Toast.makeText(context, "Failed to download QR: ${e.message}", Toast.LENGTH_SHORT).show()
+                        binding.amountTextView.visibility = View.GONE
                     }
                 }
                 Log.e("QrisPayment", "Download error: ${e.message}", e)
@@ -733,6 +802,7 @@ class QrisPaymentFragment : Fragment() {
                     binding.loadingProgressBar.visibility = View.GONE
                     binding.btnValidatePayment.isEnabled = true
                     isProcessingPayment = false
+                    binding.amountTextView.visibility = View.GONE
                 }
             }
         }

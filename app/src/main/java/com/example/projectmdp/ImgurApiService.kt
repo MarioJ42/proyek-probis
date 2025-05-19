@@ -35,7 +35,7 @@ object ImgurClient {
 
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://api.imgur.com/3/")
-        .addConverterFactory(MoshiConverterFactory.create(moshi)) // Uses Moshi converter
+        .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
 
     val apiService: ImgurApiService = retrofit.create(ImgurApiService::class.java)

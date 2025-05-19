@@ -355,6 +355,7 @@ class UserViewModel : ViewModel() {
                 Log.d("UserViewModel", "User balance: $balance")
 
                 if (balance < amount) {
+                    Log.e("UserViewModel", "Insufficient balance: $balance < $amount")
                     _simulationResult.postValue(SimulationResult.Failure("Insufficient balance: $balance < $amount"))
                     return@launch
                 }
@@ -366,44 +367,49 @@ class UserViewModel : ViewModel() {
                     Log.d("UserViewModel", "Firestore QRIS status for orderId $orderId: $qrisStatus, amount: $firestoreAmount")
 
                     if (qrisStatus != "pending") {
+                        Log.e("UserViewModel", "Invalid QRIS status: $qrisStatus")
                         _simulationResult.postValue(SimulationResult.Failure("Firestore QRIS status invalid: $qrisStatus"))
                         return@launch
                     }
 
                     if (firestoreAmount == 0.0) {
+                        Log.e("UserViewModel", "Invalid transaction amount in Firestore: $firestoreAmount")
                         _simulationResult.postValue(SimulationResult.Failure("Invalid transaction amount in Firestore"))
                         return@launch
                     }
 
-                    if (firestoreAmount != amount) {
-                        _simulationResult.postValue(SimulationResult.Failure("Amount mismatch: $firestoreAmount != $amount"))
+                    if (Math.abs(firestoreAmount - amount) > 0.001) {
+                        Log.e("UserViewModel", "Amount mismatch: Firestore=$firestoreAmount, Received=$amount")
+                        _simulationResult.postValue(SimulationResult.Failure("Amount mismatch: expected $firestoreAmount, received $amount"))
                         return@launch
                     }
+
+                    db.runTransaction { transaction ->
+                        val userRef = usersCollection.document(user.id)
+                        val paymentRef = qrisPaymentsCollection.document(orderId)
+                        transaction.update(userRef, "balance", balance - amount)
+                        transaction.update(paymentRef, "status", "settlement")
+                    }.await()
+                    Log.d("UserViewModel", "Balance updated to: ${balance - amount}, QRIS status set to settlement")
+
+                    val transaksi = Transaksi(
+                        userEmail = user.email,
+                        type = "QRIS Payment",
+                        recipient = "Merchant",
+                        amount = amount,
+                        timestamp = com.google.firebase.Timestamp.now(),
+                        status = "Completed"
+                    )
+                    logTransaction(transaksi)
+
+                    fetchUser(user.email)
+                    Log.d("UserViewModel", "QRIS payment successful for orderId: $orderId, amount: $amount")
+                    _simulationResult.postValue(SimulationResult.Success("Payment simulated successfully"))
                 } else {
                     Log.e("UserViewModel", "No QRIS payment found in Firestore for orderId: $orderId")
                     _simulationResult.postValue(SimulationResult.Failure("QRIS payment not found in Firestore"))
                     return@launch
                 }
-
-                val newBalance = balance - amount
-                db.collection("users").document(user.id).update("balance", newBalance).await()
-                Log.d("UserViewModel", "Balance updated to: $newBalance")
-
-                db.collection("qris_payments").document(orderId).update("status", "settlement").await()
-                Log.d("UserViewModel", "QrisPayment status updated to settlement for orderId: $orderId, amount=$amount")
-
-                val transaksi = Transaksi(
-                    userEmail = user.email,
-                    type = "QRIS Payment",
-                    recipient = "Merchant",
-                    amount = amount,
-                    timestamp = com.google.firebase.Timestamp.now(),
-                    status = "Completed"
-                )
-                logTransaction(transaksi)
-
-                fetchUser(user.email)
-                _simulationResult.postValue(SimulationResult.Success("Payment simulated successfully"))
             } catch (e: Exception) {
                 Log.e("UserViewModel", "Simulation error for orderId=$orderId: ${e.message}", e)
                 _simulationResult.postValue(SimulationResult.Failure("Simulation error: ${e.message}"))
