@@ -221,4 +221,20 @@
             app:argType="string"
             android:defaultValue="" />
     </fragment>
+
+    <fragment
+        android:id="@+id/requestPremiumFragment"
+        android:name="com.example.projectmdp.RequestPremiumFragment"
+        android:label="RequestPremiumFragment">
+        <argument
+            android:name="adminEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_requestPremiumFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_requestPremiumFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+    </fragment>
 </navigation>
