@@ -30,9 +30,18 @@ class AdminActivity : AppCompatActivity() {
                     loadFragment(PremiumUsersFragment.newInstance(userEmail))
                     true
                 }
+                R.id.nav_request_premium -> {
+                    loadFragment(RequestPremiumFragment().apply {
+                        arguments = Bundle().apply {
+                            putString("adminEmail", userEmail)
+                        }
+                    })
+                    true
+                }
                 else -> false
             }
         }
+
 
         if (savedInstanceState == null) {
             loadFragment(AllUsersFragment.newInstance(userEmail))
