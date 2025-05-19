@@ -12,5 +12,6 @@ data class User(
     @PropertyName("pin") val pin: String = "",
     @PropertyName("role") val role: Int = 0, // 0 = regular user, 1 = admin
     @PropertyName("status") val status: String = "active", // Default status
-    @PropertyName("phone") val phone: String = ""
+    @PropertyName("phone") val phone: String = "",
+    @PropertyName("photoUrl") val photoUrl: String = ""
 )

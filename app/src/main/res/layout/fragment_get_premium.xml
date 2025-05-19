@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="To get premium status, please upload your KTP photo and pay 500,000 from your balance."
+        android:textSize="16sp"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"/>
+
+    <ImageView
+        android:id="@+id/ktpImageView"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_gravity="center"
+        android:contentDescription="KTP Photo"
+        android:src="@drawable/profile"/>
+
+    <Button
+        android:id="@+id/btnUploadKtp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Upload KTP Photo"
+        android:layout_gravity="center"
+        android:layout_marginTop="16dp"/>
+
+    <Button
+        android:id="@+id/btnSubmitPremium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Submit Premium Request"
+        android:layout_gravity="center"
+        android:layout_marginTop="16dp"/>
+
+    <ProgressBar
+        android:id="@+id/loadingProgressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_gravity="center"/>
+</LinearLayout>
