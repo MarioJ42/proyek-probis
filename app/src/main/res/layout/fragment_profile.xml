@@ -50,6 +50,28 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent" />
 
+                <!-- Upload Photo Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnUploadPhoto"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Upload Photo"
+                    android:textColor="@android:color/white"
+                    app:backgroundTint="#03DAC6"
+                    app:layout_constraintTop_toBottomOf="@id/imageView2"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginTop="8dp" />
+
+                <ProgressBar
+                    android:id="@+id/loadingProgressBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
                 <!-- Full Name -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilFullName"
@@ -57,7 +79,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:hint="Full Name"
-                    app:layout_constraintTop_toBottomOf="@id/imageView2"
+                    app:layout_constraintTop_toBottomOf="@id/btnUploadPhoto"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
                     <com.google.android.material.textfield.TextInputEditText
@@ -98,13 +120,15 @@
                     app:layout_constraintTop_toBottomOf="@id/tilEmail"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
-                    <com.google.android.material.textfield.TextInputEditText
+                    <EditText
                         android:id="@+id/editTextText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:hint="Phone Number"
                         android:inputType="phone"
-                        android:text="081234567890"
-                        android:textColor="@android:color/black" />
+                        android:enabled="true"
+                        android:focusable="true"
+                        android:focusableInTouchMode="true" />
                 </com.google.android.material.textfield.TextInputLayout>
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
