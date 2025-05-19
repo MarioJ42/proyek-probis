@@ -8,5 +8,6 @@ data class Transaksi(
     val recipient: String? = null,
     val amount: Double = 0.0,
     val timestamp: Timestamp? = null,
-    val status: String = "Completed"
+    val status: String = "Completed",
+    val orderId: String? = null // Tambahkan untuk QRIS
 )

@@ -20,7 +20,6 @@ class AdminActivity : AppCompatActivity() {
             return
         }
 
-        // Set up Bottom Navigation
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_all_users -> {
@@ -35,7 +34,6 @@ class AdminActivity : AppCompatActivity() {
             }
         }
 
-        // Load default fragment
         if (savedInstanceState == null) {
             loadFragment(AllUsersFragment.newInstance(userEmail))
             binding.bottomNavigation.selectedItemId = R.id.nav_all_users

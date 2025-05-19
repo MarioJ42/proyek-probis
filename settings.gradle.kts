@@ -16,9 +16,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://jitpack.io") } // Ensure JitPack is included for GitHub dependencies
     }
 }
 
 rootProject.name = "ProjectMDP"
 include(":app")
- 
