@@ -66,6 +66,7 @@ class LoginFragment : Fragment() {
                                 if (user.role == 1) {
                                     val intent = Intent(requireContext(), AdminActivity::class.java)
                                     intent.putExtra("userEmail", email)
+//                                    intent.putExtra("userFullname", )
                                     startActivity(intent)
                                     requireActivity().finish()
                                 } else {

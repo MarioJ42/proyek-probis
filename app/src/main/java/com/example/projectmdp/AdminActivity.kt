@@ -38,10 +38,13 @@ class AdminActivity : AppCompatActivity() {
                     })
                     true
                 }
+                R.id.nav_admin_profile ->{
+                    loadFragment(AdminProfileFragment.newInstance(userEmail))
+                    true
+                }
                 else -> false
             }
         }
-
 
         if (savedInstanceState == null) {
             loadFragment(AllUsersFragment.newInstance(userEmail))
