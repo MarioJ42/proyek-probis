@@ -53,6 +53,7 @@ class AllUsersFragment : Fragment() {
             this.adapter = adapter
         }
 
+
         // Fetch users
         viewModel.fetchAllUsersExceptAdmin(userEmail)
 
@@ -60,15 +61,26 @@ class AllUsersFragment : Fragment() {
         viewModel.users.observe(viewLifecycleOwner) { users ->
             adapter.submitList(users)
             binding.userCountText.text = "Total Users: ${users.size}"
+            binding.btnsearch12.setOnClickListener {
+                val query = binding.etsearch12.text.toString().trim()
+                if (query.isNotEmpty()) {
+                    val filteredUsers = users.filter { it.email.contains(query, ignoreCase = true) }
+                    adapter.submitList(filteredUsers)
+                    binding.userCountText.text = "Total Users: ${filteredUsers.size}"
+                } else {
+                    adapter.submitList(users)
+                    binding.userCountText.text = "Total Users: ${users.size}"
+                }
+            }
         }
 
         // Logout button
-        binding.btnLogout.setOnClickListener {
-            (activity as? AdminActivity)?.let { adminActivity ->
-                adminActivity.finish()
-            }
-            findNavController().navigate(R.id.action_global_loginFragment)
-        }
+//        binding.btnLogout.setOnClickListener {
+//            (activity as? AdminActivity)?.let { adminActivity ->
+//                adminActivity.finish()
+//            }
+//            findNavController().navigate(R.id.action_global_loginFragment)
+//        }
     }
 
     override fun onDestroyView() {

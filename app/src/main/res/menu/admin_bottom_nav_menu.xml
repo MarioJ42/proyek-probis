@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_all_users"
         android:title="All Users"
@@ -8,4 +9,8 @@
         android:id="@+id/nav_premium_users"
         android:title="Premium Users"
         android:icon="@android:drawable/ic_btn_speak_now" />
+    <item
+        android:id="@+id/nav_admin_profile"
+        android:icon="@drawable/ic_profile"
+        android:title="Profile" />
 </menu>

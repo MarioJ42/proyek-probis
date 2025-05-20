@@ -30,6 +30,10 @@ class AdminActivity : AppCompatActivity() {
                     loadFragment(PremiumUsersFragment.newInstance(userEmail))
                     true
                 }
+                R.id.nav_admin_profile ->{
+                    loadFragment(AdminProfileFragment.newInstance(userEmail))
+                    true
+                }
                 else -> false
             }
         }
