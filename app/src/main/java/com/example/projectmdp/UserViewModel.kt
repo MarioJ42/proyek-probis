@@ -24,6 +24,11 @@ sealed class SimulationResult {
     data class Failure(val message: String) : SimulationResult()
 }
 
+sealed class TopUpResult {
+    data class Success(val message: String) : TopUpResult()
+    data class Failure(val message: String) : TopUpResult()
+}
+
 class UserViewModel : ViewModel() {
     private val db = Firebase.firestore
     private val usersCollection = db.collection("users")
@@ -42,8 +47,8 @@ class UserViewModel : ViewModel() {
     private val _loginResult = MutableLiveData<Boolean?>()
     val loginResult: LiveData<Boolean?> get() = _loginResult
 
-    private val _topUpResult = MutableLiveData<Boolean>()
-    val topUpResult: LiveData<Boolean> get() = _topUpResult
+    private val _topUpResult = MutableLiveData<TopUpResult>()
+    val topUpResult: LiveData<TopUpResult> get() = _topUpResult
 
     private val _paymentResult = MutableLiveData<PaymentResult>()
     val paymentResult: LiveData<PaymentResult> get() = _paymentResult
@@ -63,7 +68,8 @@ class UserViewModel : ViewModel() {
     private fun createAdminUser() {
         viewModelScope.launch {
             try {
-                val snapshot = usersCollection.whereEqualTo("email", "william@gmail.com").get().await()
+                val snapshot =
+                    usersCollection.whereEqualTo("email", "william@gmail.com").get().await()
                 if (snapshot.isEmpty) {
                     val adminUser = User(
                         id = "",
@@ -87,12 +93,16 @@ class UserViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val snapshot = usersCollection.whereEqualTo("email", email).get().await()
-                Log.d("UserViewModel", "Login query for email: $email, snapshot size: ${snapshot.size()}")
+                Log.d(
+                    "UserViewModel",
+                    "Login query for email: $email, snapshot size: ${snapshot.size()}"
+                )
                 if (snapshot.isEmpty) {
                     _loginResult.postValue(false)
                     return@launch
                 }
-                val user = snapshot.documents[0].toObject(User::class.java)?.copy(id = snapshot.documents[0].id)
+                val user = snapshot.documents[0].toObject(User::class.java)
+                    ?.copy(id = snapshot.documents[0].id)
                 if (user?.password == password) {
                     _user.postValue(user)
                     _userEmail.postValue(email)
@@ -115,22 +125,26 @@ class UserViewModel : ViewModel() {
     fun fetchUser(email: String) {
         viewModelScope.launch {
             try {
-                val snapshot = usersCollection.whereEqualTo("email", email).get().await()
+                val normalizedEmail = email.lowercase()
+                val snapshot = usersCollection.whereEqualTo("email", normalizedEmail).get().await()
                 if (!snapshot.isEmpty) {
                     val doc = snapshot.documents[0]
                     val user = doc.toObject(User::class.java)?.copy(id = doc.id)
                     if (user != null) {
                         _user.postValue(user)
-                        _userEmail.postValue(email)
+                        _userEmail.postValue(normalizedEmail)
                         _balance.postValue(user.balance)
-                        Log.d("UserViewModel", "Fetched user: email=$email, balance=${user.balance}")
+                        Log.d(
+                            "UserViewModel",
+                            "Fetched user: email=$normalizedEmail, balance=${user.balance}"
+                        )
                     } else {
-                        Log.e("UserViewModel", "Failed to parse user for email=$email")
+                        Log.e("UserViewModel", "Failed to parse user for email=$normalizedEmail")
                         _user.postValue(null)
                         _userEmail.postValue(null)
                     }
                 } else {
-                    Log.e("UserViewModel", "No user found for email=$email")
+                    Log.e("UserViewModel", "No user found for email=$normalizedEmail")
                     _user.postValue(null)
                     _userEmail.postValue(null)
                 }
@@ -145,26 +159,31 @@ class UserViewModel : ViewModel() {
     fun register(email: String, fullName: String, password: String, pin: String) {
         viewModelScope.launch {
             try {
-                val snapshot = usersCollection.whereEqualTo("email", email.lowercase()).get().await()
+                val normalizedEmail = email.lowercase()
+                val snapshot = usersCollection.whereEqualTo("email", normalizedEmail).get().await()
                 if (!snapshot.isEmpty) {
-                    Log.d("UserViewModel", "Email already exists: $email")
+                    Log.d("UserViewModel", "Email already exists: $normalizedEmail")
                     _loginResult.postValue(false)
                     return@launch
                 }
                 val user = User(
                     id = "",
                     fullName = fullName,
-                    email = email.lowercase(),
+                    email = normalizedEmail,
                     password = password,
                     pin = pin,
                     role = 0,
-                    status = "active"
+                    status = "active",
+                    balance = 0.0
                 )
                 val docRef = usersCollection.add(user).await()
-                Log.d("UserViewModel", "User registered: $email, document ID: ${docRef.id}")
+                Log.d(
+                    "UserViewModel",
+                    "User registered: $normalizedEmail, document ID: ${docRef.id}"
+                )
                 _loginResult.postValue(true)
-                _userEmail.postValue(email.lowercase())
-                fetchUser(email.lowercase())
+                _userEmail.postValue(normalizedEmail)
+                fetchUser(normalizedEmail)
             } catch (e: Exception) {
                 Log.e("UserViewModel", "Registration error for email=$email: ${e.message}", e)
                 _loginResult.postValue(null)
@@ -195,35 +214,51 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    fun topUp(email: String, amount: Double) {
-        viewModelScope.launch {
+    fun topUpBalance(email: String, amount: Double, orderId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                val snapshot = usersCollection.whereEqualTo("email", email).get().await()
-                if (!snapshot.isEmpty) {
-                    val docId = snapshot.documents[0].id
-                    val currentBalance = snapshot.documents[0].toObject(User::class.java)?.balance ?: 0.0
-                    usersCollection.document(docId).update("balance", currentBalance + amount).await()
-
-                    val transaksi = Transaksi(
-                        userEmail = email,
-                        type = "TopUp Saldo",
-                        recipient = "System",
-                        amount = amount,
-                        timestamp = com.google.firebase.Timestamp.now(),
-                        status = "Completed"
-                    )
-                    logTransaction(transaksi)
-
-                    fetchUser(email)
-                    Log.d("UserViewModel", "Top-up successful: email=$email, amount=$amount")
-                    _topUpResult.postValue(true)
-                } else {
-                    Log.e("UserViewModel", "Top-up failed: User not found for email=$email")
-                    _topUpResult.postValue(false)
+                if (amount <= 0) {
+                    _topUpResult.postValue(TopUpResult.Failure("Invalid top-up amount"))
+                    Log.e("UserViewModel", "Invalid top-up amount: $amount, orderId=$orderId")
+                    return@launch
                 }
+                val normalizedEmail = email.lowercase()
+                val userSnapshot =
+                    usersCollection.whereEqualTo("email", normalizedEmail).get().await()
+                if (userSnapshot.isEmpty) {
+                    _topUpResult.postValue(TopUpResult.Failure("User not found"))
+                    Log.e("UserViewModel", "User not found for top-up: email=$normalizedEmail")
+                    return@launch
+                }
+                val userDoc = userSnapshot.documents[0]
+                val user = userDoc.toObject(User::class.java)
+                if (user == null) {
+                    _topUpResult.postValue(TopUpResult.Failure("Failed to parse user data"))
+                    Log.e("UserViewModel", "Failed to parse user data for email=$normalizedEmail")
+                    return@launch
+                }
+                Log.d(
+                    "UserViewModel",
+                    "Processing top-up: orderId=$orderId, amount=$amount, email=$normalizedEmail"
+                )
+                val transaksi = Transaksi(
+                    userEmail = normalizedEmail,
+                    type = "TopUp Saldo",
+                    recipient = "System",
+                    amount = amount,
+                    timestamp = com.google.firebase.Timestamp.now(),
+                    status = "Completed"
+                )
+                transactionsCollection.add(transaksi).await()
+                val newBalance = user.balance + amount
+                usersCollection.document(userDoc.id).update("balance", newBalance).await()
+                _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
+                _balance.postValue(newBalance)
+                _topUpResult.postValue(TopUpResult.Success("Top-up successful"))
+                Log.d("UserViewModel", "Top-up completed: orderId=$orderId, newBalance=$newBalance")
             } catch (e: Exception) {
-                Log.e("UserViewModel", "Top-up error for email=$email: ${e.message}", e)
-                _topUpResult.postValue(false)
+                _topUpResult.postValue(TopUpResult.Failure("Top-up failed: ${e.message}"))
+                Log.e("UserViewModel", "Top-up error: orderId=$orderId, error=${e.message}")
             }
         }
     }
@@ -268,16 +303,28 @@ class UserViewModel : ViewModel() {
                 logTransaction(transaksi)
 
                 fetchUser(fromEmail)
-                Log.d("UserViewModel", "Transfer successful: New sender balance=${_user.value?.balance}")
+                Log.d(
+                    "UserViewModel",
+                    "Transfer successful: New sender balance=${_user.value?.balance}"
+                )
                 onResult(null)
             } catch (e: Exception) {
-                Log.e("UserViewModel", "Transfer failed from $fromEmail to $toEmail: ${e.message}", e)
+                Log.e(
+                    "UserViewModel",
+                    "Transfer failed from $fromEmail to $toEmail: ${e.message}",
+                    e
+                )
                 onResult(e.message)
             }
         }
     }
 
-    fun transferToBank(userEmail: String, bankAccount: String, amount: Double, onResult: (String?) -> Unit) {
+    fun transferToBank(
+        userEmail: String,
+        bankAccount: String,
+        amount: Double,
+        onResult: (String?) -> Unit
+    ) {
         viewModelScope.launch {
             try {
                 val userSnapshot = usersCollection.whereEqualTo("email", userEmail).get().await()
@@ -306,7 +353,10 @@ class UserViewModel : ViewModel() {
                 logTransaction(transaksi)
 
                 fetchUser(userEmail)
-                Log.d("UserViewModel", "Bank transfer successful: New balance=${_user.value?.balance}")
+                Log.d(
+                    "UserViewModel",
+                    "Bank transfer successful: New balance=${_user.value?.balance}"
+                )
                 onResult(null)
             } catch (e: Exception) {
                 Log.e("UserViewModel", "Bank transfer failed for $userEmail: ${e.message}", e)
@@ -344,74 +394,133 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    fun simulateQrisPayment(orderId: String, amount: Double) {
+    fun simulateQrisPayment(orderId: String, amount: Double, userEmail: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                Log.d("UserViewModel", "Starting simulateQrisPayment for orderId: $orderId, amount: $amount")
+                Log.d(
+                    "UserViewModel",
+                    "Starting simulateQrisPayment for orderId: $orderId, amount: $amount, userEmail: $userEmail"
+                )
 
-                val user = user.value ?: throw Exception("User not found")
-                val balance = user.balance
-                Log.d("UserViewModel", "User balance: $balance")
-
-                if (balance < amount) {
-                    Log.e("UserViewModel", "Insufficient balance: $balance < $amount")
-                    _simulationResult.postValue(SimulationResult.Failure("Insufficient balance: $balance < $amount"))
+                if (amount <= 0) {
+                    _simulationResult.postValue(SimulationResult.Failure("Invalid payment amount"))
+                    Log.e("UserViewModel", "Invalid QRIS amount: $amount, orderId=$orderId")
                     return@launch
                 }
 
-                val qrisSnapshot = qrisPaymentsCollection.document(orderId).get().await()
-                if (qrisSnapshot.exists()) {
-                    val qrisStatus = qrisSnapshot.getString("status") ?: "unknown"
-                    val firestoreAmount = qrisSnapshot.getDouble("amount") ?: 0.0
-                    Log.d("UserViewModel", "Firestore QRIS status for orderId $orderId: $qrisStatus, amount: $firestoreAmount")
+                // Verify user and balance
+                val snapshot =
+                    usersCollection.whereEqualTo("email", userEmail.lowercase()).get().await()
+                if (snapshot.isEmpty) {
+                    _simulationResult.postValue(SimulationResult.Failure("User not found"))
+                    Log.e("UserViewModel", "User not found for QRIS payment: email=$userEmail")
+                    return@launch
+                }
 
-                    if (qrisStatus != "pending") {
-                        Log.e("UserViewModel", "Invalid QRIS status: $qrisStatus")
-                        _simulationResult.postValue(SimulationResult.Failure("Firestore QRIS status invalid: $qrisStatus"))
-                        return@launch
+                val userDoc = snapshot.documents[0]
+                val user = userDoc.toObject(User::class.java)
+                if (user == null) {
+                    _simulationResult.postValue(SimulationResult.Failure("Failed to parse user data"))
+                    Log.e("UserViewModel", "Failed to parse user data for email=$userEmail")
+                    return@launch
+                }
+
+                // For top-up transactions, skip balance check as it's an addition
+                if (!orderId.startsWith("TOPUP-") && user.balance < amount) {
+                    _simulationResult.postValue(SimulationResult.Failure("Insufficient balance"))
+                    Log.e(
+                        "UserViewModel",
+                        "Insufficient balance: email=$userEmail, balance=${user.balance}, amount=$amount"
+                    )
+                    return@launch
+                }
+
+                // Verify payment status
+                val verifyResponse = App.api.verifyQrisPayment(orderId)
+                if (!verifyResponse.success) {
+                    throw Exception("Payment verification failed: ${verifyResponse.message}")
+                }
+
+                // Call simulation API
+                Log.d("UserViewModel", "Simulating QRIS payment: orderId=$orderId, amount=$amount")
+                val request = SimulateQrisRequest(order_id = orderId, amount = amount)
+                val response = App.api.simulateQrisPayment(request)
+
+                if (response.success && response.status == "settlement") {
+                    // Update Firestore balance
+                    val newBalance = if (orderId.startsWith("TOPUP-")) {
+                        user.balance + amount // Top-up: add to balance
+                    } else {
+                        user.balance - amount // Payment: subtract from balance
                     }
+                    usersCollection.document(userDoc.id).update("balance", newBalance).await()
 
-                    if (firestoreAmount == 0.0) {
-                        Log.e("UserViewModel", "Invalid transaction amount in Firestore: $firestoreAmount")
-                        _simulationResult.postValue(SimulationResult.Failure("Invalid transaction amount in Firestore"))
-                        return@launch
-                    }
-
-                    if (Math.abs(firestoreAmount - amount) > 0.001) {
-                        Log.e("UserViewModel", "Amount mismatch: Firestore=$firestoreAmount, Received=$amount")
-                        _simulationResult.postValue(SimulationResult.Failure("Amount mismatch: expected $firestoreAmount, received $amount"))
-                        return@launch
-                    }
-
-                    db.runTransaction { transaction ->
-                        val userRef = usersCollection.document(user.id)
-                        val paymentRef = qrisPaymentsCollection.document(orderId)
-                        transaction.update(userRef, "balance", balance - amount)
-                        transaction.update(paymentRef, "status", "settlement")
-                    }.await()
-                    Log.d("UserViewModel", "Balance updated to: ${balance - amount}, QRIS status set to settlement")
-
+                    // Log transaction
                     val transaksi = Transaksi(
-                        userEmail = user.email,
-                        type = "QRIS Payment",
-                        recipient = "Merchant",
+                        userEmail = userEmail.lowercase(),
+                        type = if (orderId.startsWith("TOPUP-")) "TopUp Saldo" else "QRIS Payment",
+                        recipient = "System",
                         amount = amount,
                         timestamp = com.google.firebase.Timestamp.now(),
                         status = "Completed"
                     )
-                    logTransaction(transaksi)
+                    transactionsCollection.add(transaksi).await()
 
-                    fetchUser(user.email)
-                    Log.d("UserViewModel", "QRIS payment successful for orderId: $orderId, amount: $amount")
-                    _simulationResult.postValue(SimulationResult.Success("Payment simulated successfully"))
+                    // Update qris_payments status only for non-top-up transactions
+                    if (!orderId.startsWith("TOPUP-")) {
+                        val paymentSnapshot = qrisPaymentsCollection.document(orderId).get().await()
+                        if (paymentSnapshot.exists()) {
+                            qrisPaymentsCollection.document(orderId).update("status", "settlement")
+                                .await()
+                        } else {
+                            Log.w(
+                                "UserViewModel",
+                                "No qris_payments document found for orderId=$orderId, skipping update"
+                            )
+                        }
+                    }
+
+                    // Update local state
+                    _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
+                    _balance.postValue(newBalance)
+                    _simulationResult.postValue(
+                        SimulationResult.Success(
+                            response.message ?: "Payment successful"
+                        )
+                    )
+                    Log.d(
+                        "UserViewModel",
+                        "QRIS payment simulated: orderId=$orderId, newBalance=$newBalance"
+                    )
                 } else {
-                    Log.e("UserViewModel", "No QRIS payment found in Firestore for orderId: $orderId")
-                    _simulationResult.postValue(SimulationResult.Failure("QRIS payment not found in Firestore"))
-                    return@launch
+                    _simulationResult.postValue(
+                        SimulationResult.Failure(
+                            response.message ?: "Simulation failed"
+                        )
+                    )
+                    Log.e(
+                        "UserViewModel",
+                        "QRIS simulation failed: orderId=$orderId, message=${response.message}"
+                    )
                 }
+            } catch (e: HttpException) {
+                val errorBody = e.response()?.errorBody()?.string() ?: "No response body"
+                val message = when (e.code()) {
+                    400 -> "Invalid QRIS request: $errorBody"
+                    404 -> "QRIS order not found: $orderId"
+                    else -> "HTTP error ${e.code()}: $errorBody"
+                }
+                _simulationResult.postValue(SimulationResult.Failure(message))
+                Log.e(
+                    "UserViewModel",
+                    "HTTP error in QRIS simulation: orderId=$orderId, code=${e.code()}, error=$errorBody"
+                )
             } catch (e: Exception) {
-                Log.e("UserViewModel", "Simulation error for orderId=$orderId: ${e.message}", e)
-                _simulationResult.postValue(SimulationResult.Failure("Simulation error: ${e.message}"))
+                _simulationResult.postValue(SimulationResult.Failure("Payment failed: ${e.message}"))
+                Log.e(
+                    "UserViewModel",
+                    "QRIS simulation error: orderId=$orderId, error=${e.message}"
+                )
             }
         }
     }
