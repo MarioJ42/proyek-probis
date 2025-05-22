@@ -22,6 +22,12 @@
         <action
             android:id="@+id/action_loginFragment_to_homeFragment"
             app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_allUsersFragment2"
+            app:destination="@id/allUsersFragment2" />
+        <action
+            android:id="@+id/action_loginFragment_to_premiumUsersFragment2"
+            app:destination="@id/premiumUsersFragment2" />
     </fragment>
     <action
         android:id="@+id/action_topUpFragment_to_loginFragment"
@@ -238,5 +244,64 @@
         <action
             android:id="@+id/action_requestPremiumFragment_to_homeFragment"
             app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_requestPremiumFragment_to_allUsersFragment2"
+            app:destination="@id/allUsersFragment2" />
+        <action
+            android:id="@+id/action_requestPremiumFragment_to_premiumUsersFragment2"
+            app:destination="@id/premiumUsersFragment2" />
     </fragment>
+    <fragment
+        android:id="@+id/adminProfileFragment2"
+        android:name="com.example.projectmdp.AdminProfileFragment"
+        android:label="AdminProfileFragment" >
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_adminProfileFragment2_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_adminProfileFragment2_to_requestPremiumFragment"
+            app:destination="@id/requestPremiumFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/allUsersFragment2"
+        android:name="com.example.projectmdp.AllUsersFragment"
+        android:label="AllUsersFragment" >
+
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+
+        <action
+            android:id="@+id/action_allUsersFragment2_to_premiumUsersFragment2"
+            app:destination="@id/premiumUsersFragment2" />
+        <action
+            android:id="@+id/action_allUsersFragment2_to_adminProfileFragment2"
+            app:destination="@id/adminProfileFragment2" />
+        <action
+            android:id="@+id/action_allUsersFragment2_to_requestPremiumFragment"
+            app:destination="@id/requestPremiumFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/premiumUsersFragment2"
+        android:name="com.example.projectmdp.PremiumUsersFragment"
+        android:label="PremiumUsersFragment" >
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_premiumUsersFragment2_to_allUsersFragment2"
+            app:destination="@id/allUsersFragment2" />
+        <action
+            android:id="@+id/action_premiumUsersFragment2_to_adminProfileFragment2"
+            app:destination="@id/adminProfileFragment2" />
+    </fragment>
+    <action android:id="@+id/action_global_adminProfileFragment2" app:destination="@id/adminProfileFragment2" />
+    <action android:id="@+id/action_global_allUsersFragment2" app:destination="@id/allUsersFragment2" />
+    <action android:id="@+id/action_global_premiumUsersFragment2" app:destination="@id/premiumUsersFragment2" />
 </navigation>

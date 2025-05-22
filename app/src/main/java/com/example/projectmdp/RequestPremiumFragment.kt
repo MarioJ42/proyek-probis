@@ -27,7 +27,7 @@ class RequestPremiumFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        adminEmail = arguments?.getString("adminEmail") ?: ""
+        adminEmail = arguments?.getString("userEmail") ?: ""
         if (adminEmail.isEmpty()) {
             Log.e("RequestPremiumFragment", "Admin email not provided")
             Toast.makeText(context, "Admin email not found", Toast.LENGTH_SHORT).show()

@@ -39,11 +39,20 @@ class AdminProfileFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val email = arguments?.getString("userEmail") ?: ""
-        binding.editTextText2.setText(email)
-        binding.button3.setOnClickListener {
-            requireActivity().finish()
-            startActivity(Intent(requireContext(), LoginFragment::class.java))
+        val userEmail = arguments?.getString(ARG_EMAIL) ?: ""
+
+        if (userEmail.isEmpty()) {
+            // Jika kosong, langsung navigasi ke login
+            findNavController().navigate(R.id.action_global_loginFragment)
+            return
+        }
+        binding.editTextText2.setText(userEmail)
+        binding.button3.setOnClickListener{
+            (activity as? AdminActivity)?.let { adminActivity ->
+                adminActivity.userEmail = null
+            }
+            findNavController().popBackStack(R.id.loginFragment, true)
+            findNavController().navigate(R.id.loginFragment)
         }
     }
 
