@@ -79,6 +79,8 @@ class ProfileFragment : Fragment() {
             viewModel.setUserEmail(userEmail!!)
         } else {
             Log.e("ProfileFragment", "No user email provided in arguments")
+            Toast.makeText(requireContext(), "User email not found", Toast.LENGTH_SHORT).show()
+            findNavController().navigate(R.id.action_profileFragment_to_loginFragment)
         }
     }
 
@@ -101,19 +103,8 @@ class ProfileFragment : Fragment() {
         binding.editTextText.requestFocus() // Force focus to ensure keyboard appears
         Log.d("ProfileFragment", "editTextText state: enabled=${binding.editTextText.isEnabled}, focusable=${binding.editTextText.isFocusable}")
 
-        viewModel.userEmail.observe(viewLifecycleOwner) { email ->
-            if (email != null) {
-                userEmail = email
-                Log.d("ProfileFragment", "Observing user email: $email")
-                viewModel.fetchUser(email)
-            } else {
-                Log.e("ProfileFragment", "User email is null, navigating to login")
-                Toast.makeText(requireContext(), "Please log in", Toast.LENGTH_SHORT).show()
-                findNavController().navigate(R.id.action_profileFragment_to_loginFragment)
-            }
-        }
-
-        viewModel.user.observe(viewLifecycleOwner) { user ->
+        // Observe user data once
+        viewModel.user.observe(viewLifecycleOwner, { user ->
             if (user != null) {
                 Log.d("ProfileFragment", "User data received: email=${user.email}, phone=${user.phone}, photoUrl=${user.photoUrl}")
                 binding.editTextText3.setText(user.fullName)
@@ -130,9 +121,10 @@ class ProfileFragment : Fragment() {
                 }
             } else {
                 Log.e("ProfileFragment", "User data is null, navigating to login")
+                Toast.makeText(requireContext(), "Please log in", Toast.LENGTH_SHORT).show()
                 findNavController().navigate(R.id.action_profileFragment_to_loginFragment)
             }
-        }
+        })
 
         viewModel.premiumStatus.observe(viewLifecycleOwner) { premium ->
             if (premium != null) {
@@ -142,9 +134,9 @@ class ProfileFragment : Fragment() {
         }
 
         binding.button2.setOnClickListener {
-            val newFullName = binding.editTextText3.text.toString()
-            val newEmail = binding.editTextText2.text.toString()
-            val newPhone = binding.editTextText.text.toString()
+            val newFullName = binding.editTextText3.text.toString().trim()
+            val newEmail = binding.editTextText2.text.toString().trim()
+            val newPhone = binding.editTextText.text.toString().trim()
 
             Log.d("ProfileFragment", "Save clicked: newFullName=$newFullName, newEmail=$newEmail, newPhone=$newPhone")
 
@@ -158,6 +150,13 @@ class ProfileFragment : Fragment() {
                 val currentPhotoUrl = viewModel.user.value?.photoUrl ?: ""
                 viewModel.updateUserProfile(email, newFullName, newEmail, currentPhotoUrl, newPhone)
                 Toast.makeText(requireContext(), "Profile updated successfully", Toast.LENGTH_SHORT).show()
+                // Optionally refetch user data after a delay to ensure Firestore sync
+                viewLifecycleOwner.lifecycleScope.launch {
+                    withContext(Dispatchers.IO) {
+                        kotlinx.coroutines.delay(1000) // Wait for Firestore to sync
+                    }
+                    viewModel.fetchUser(newEmail.lowercase())
+                }
             } ?: Log.e("ProfileFragment", "Cannot update profile: userEmail is null")
         }
 

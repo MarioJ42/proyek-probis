@@ -1,6 +1,8 @@
 package com.example.projectmdp
 
 import android.util.Log
+import android.widget.Toast
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -238,32 +240,52 @@ class UserViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 Log.d("UserViewModel", "Updating profile: email=$email, fullName=$fullName, newEmail=$newEmail, photoUrl=$photoUrl, phone=$phone")
-                val snapshot = usersCollection.whereEqualTo("email", email.lowercase()).get().await()
-                if (!snapshot.isEmpty) {
-                    val docId = snapshot.documents[0].id
-                    Log.d("UserViewModel", "Found user document: docId=$docId")
+                val normalizedEmail = email.lowercase()
+                val normalizedNewEmail = newEmail.lowercase()
+                val snapshot = usersCollection.whereEqualTo("email", normalizedEmail).get().await()
 
-                    val currentUser = snapshot.documents[0].toObject(User::class.java)
-                    val updatedPhotoUrl = if (photoUrl.isEmpty() && currentUser?.photoUrl != null) currentUser.photoUrl else photoUrl
-                    val updatedPhone = if (phone.isEmpty() && currentUser?.phone != null) currentUser.phone else phone
-
-                    val updates = mapOf(
-                        "fullName" to fullName,
-                        "email" to newEmail.lowercase(),
-                        "photoUrl" to updatedPhotoUrl,
-                        "phone" to updatedPhone
-                    )
-                    Log.d("UserViewModel", "Firestore update map: $updates")
-
-                    usersCollection.document(docId).update(updates).await()
-                    Log.d("UserViewModel", "Firestore update successful for docId=$docId")
-                    fetchUser(newEmail.lowercase())
-                    Log.d("UserViewModel", "Updated profile: email=$email to newEmail=$newEmail")
-                } else {
-                    Log.e("UserViewModel", "User not found for profile update: email=$email")
+                if (snapshot.isEmpty) {
+                    Log.e("UserViewModel", "User not found for profile update: email=$normalizedEmail")
+                    return@launch
                 }
+
+                val docId = snapshot.documents[0].id
+                Log.d("UserViewModel", "Found user document: docId=$docId")
+
+                val currentUser = snapshot.documents[0].toObject(User::class.java)
+                val updatedPhotoUrl = if (photoUrl.isEmpty() && currentUser?.photoUrl != null) currentUser.photoUrl else photoUrl
+                val updatedPhone = if (phone.isEmpty() && currentUser?.phone != null) currentUser.phone else phone
+
+                // Check if new email already exists (unless it's the same as the current email)
+                if (normalizedNewEmail != normalizedEmail) {
+                    val emailSnapshot = usersCollection.whereEqualTo("email", normalizedNewEmail).get().await()
+                    if (!emailSnapshot.isEmpty && emailSnapshot.documents[0].id != docId) {
+                        Log.e("UserViewModel", "New email already exists: $normalizedNewEmail")
+                        throw IllegalArgumentException("Email already in use")
+                    }
+                }
+
+                val updates = mutableMapOf<String, Any>(
+                    "fullName" to fullName.trim(),
+                    "email" to normalizedNewEmail,
+                    "photoUrl" to updatedPhotoUrl,
+                    "phone" to updatedPhone.trim()
+                ).filterValues { it.toString().isNotEmpty() } // Remove empty updates
+
+                Log.d("UserViewModel", "Firestore update map: $updates")
+
+                usersCollection.document(docId).update(updates).await()
+                Log.d("UserViewModel", "Firestore update successful for docId=$docId")
+
+                // Update local state and fetch updated user
+                _userEmail.postValue(normalizedNewEmail) // Update email observer
+                fetchUser(normalizedNewEmail)
+                Log.d("UserViewModel", "Updated profile: email=$email to newEmail=$normalizedNewEmail")
             } catch (e: Exception) {
                 Log.e("UserViewModel", "Update profile error for email=$email: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+//                    Toast.makeText(requireContext(user.value.id), "Failed to update profile: ${e.message}", Toast.LENGTH_LONG).show()
+                }
             }
         }
     }

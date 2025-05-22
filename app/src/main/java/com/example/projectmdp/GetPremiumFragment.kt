@@ -127,6 +127,10 @@ class GetPremiumFragment : Fragment() {
             }
         }
 
+        binding.btnBack.setOnClickListener {
+            findNavController().navigateUp()
+        }
+
         binding.btnSubmitPremium.setOnClickListener {
             if (selectedKtpUri == null) {
                 Toast.makeText(context, "Please upload your KTP photo first", Toast.LENGTH_SHORT).show()

@@ -46,9 +46,11 @@
                     android:src="@drawable/profile"
                     android:background="@drawable/circle_bg"
                     android:scaleType="centerCrop"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent" />
+                    android:clipToOutline="true"
+                android:outlineProvider="background"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
 
                 <!-- Upload Photo Button -->
                 <com.google.android.material.button.MaterialButton
