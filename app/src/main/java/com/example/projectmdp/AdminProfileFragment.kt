@@ -41,9 +41,12 @@ class AdminProfileFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val email = arguments?.getString("userEmail") ?: ""
         binding.editTextText2.setText(email)
-        binding.button3.setOnClickListener {
-            requireActivity().finish()
-            startActivity(Intent(requireContext(), LoginFragment::class.java))
+        binding.button3.setOnClickListener{
+            (activity as? AdminActivity)?.let { adminActivity ->
+                adminActivity.userEmail = null
+            }
+            findNavController().popBackStack(R.id.loginFragment, true)
+            findNavController().navigate(R.id.loginFragment)
         }
     }
 

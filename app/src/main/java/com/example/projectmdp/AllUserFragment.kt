@@ -15,17 +15,17 @@ class AllUsersFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: AdminViewModel by viewModels { AdminViewModelFactory() }
 
-    companion object {
-        private const val ARG_EMAIL = "userEmail"
-        fun newInstance(email: String): AllUsersFragment {
-            val fragment = AllUsersFragment()
-            val args = Bundle().apply {
-                putString(ARG_EMAIL, email)
-            }
-            fragment.arguments = args
-            return fragment
-        }
-    }
+//    companion object {
+//        private const val ARG_EMAIL = "userEmail"
+//        fun newInstance(email: String): AllUsersFragment {
+//            val fragment = AllUsersFragment()
+//            val args = Bundle().apply {
+//                putString(ARG_EMAIL, email)
+//            }
+//            fragment.arguments = args
+//            return fragment
+//        }
+//    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -38,7 +38,7 @@ class AllUsersFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val userEmail = arguments?.getString(ARG_EMAIL) ?: ""
+        val userEmail = arguments?.getString("userEmail") ?: ""
         if (userEmail.isEmpty()) {
             findNavController().navigate(R.id.action_global_loginFragment)
             return
@@ -76,10 +76,7 @@ class AllUsersFragment : Fragment() {
 
         // Logout button
 //        binding.btnLogout.setOnClickListener {
-//            (activity as? AdminActivity)?.let { adminActivity ->
-//                adminActivity.finish()
-//            }
-//            findNavController().navigate(R.id.action_global_loginFragment)
+
 //        }
     }
 
