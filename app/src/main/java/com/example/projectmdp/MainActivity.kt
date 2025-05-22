@@ -12,7 +12,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 class MainActivity : AppCompatActivity() {
     private lateinit var navController: NavController
     private lateinit var bottomNavigationView: BottomNavigationView
-    var userEmail: String? = null // Store userEmail here
+    var userEmail: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
