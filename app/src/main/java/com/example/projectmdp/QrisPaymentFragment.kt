@@ -121,7 +121,7 @@ class QrisPaymentFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        userEmail = arguments?.getString("userEmail")
+        userEmail = arguments?.getString("userEmail")?.lowercase()
         if (userEmail != null) {
             viewModel.setUserEmail(userEmail!!)
         }
@@ -313,27 +313,66 @@ class QrisPaymentFragment : Fragment() {
             val success = bundle.getBoolean("success", false)
             val errorMessage = bundle.getString("errorMessage")
             if (success) {
-                Log.d("QrisPayment", "PIN verification successful, navigating to HomeFragment")
-                Toast.makeText(context, "Payment successful", Toast.LENGTH_SHORT).show()
+                Log.d("QrisPayment", "PIN verification successful, processing QRIS payment")
                 userEmail?.let { email ->
-                    val navBundle = Bundle().apply { putString("userEmail", email) }
-                    findNavController().navigate(R.id.action_qrisPaymentFragment_to_homeFragment, navBundle)
+                    orderId?.let { oid ->
+                        amount?.let { amt ->
+                            viewLifecycleOwner.lifecycleScope.launch {
+                                try {
+                                    viewModel.processQrisPayment(email, oid, amt)
+                                    withContext(Dispatchers.Main) {
+                                        if (isAdded) {
+                                            Toast.makeText(context, "Payment successful", Toast.LENGTH_SHORT).show()
+                                            val db = FirebaseFirestore.getInstance()
+                                            db.collection("qris_payments").document(oid)
+                                                .update("status", "settlement")
+                                                .addOnSuccessListener {
+                                                    Log.d("QrisPayment", "Firestore payment status updated to settlement for orderId=$oid")
+                                                }
+                                                .addOnFailureListener { e ->
+                                                    Log.e("QrisPayment", "Failed to update Firestore payment status: ${e.message}")
+                                                }
+                                            val navBundle = Bundle().apply { putString("userEmail", email) }
+                                            findNavController().navigate(R.id.action_qrisPaymentFragment_to_homeFragment, navBundle)
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    withContext(Dispatchers.Main) {
+                                        if (isAdded) {
+                                            Toast.makeText(context, "Payment failed: ${e.message}", Toast.LENGTH_LONG).show()
+                                            binding.statusTextView.text = "Status: Payment failed"
+                                            binding.amountTextView.visibility = View.GONE
+                                            binding.btnValidatePayment.isEnabled = false
+                                            orderId = null
+                                            amount = null
+                                            isProcessingPayment = false
+                                            binding.btnValidatePayment.isEnabled = true
+                                            binding.loadingProgressBar.visibility = View.GONE
+                                        }
+                                    }
+                                    Log.e("QrisPayment", "Payment processing error: ${e.message}", e)
+                                }
+                            }
+                        } ?: run {
+                            Log.e("QrisPayment", "Amount is null after PIN verification")
+                            Toast.makeText(context, "Payment failed: Amount not found", Toast.LENGTH_LONG).show()
+                            resetUI()
+                        }
+                    } ?: run {
+                        Log.e("QrisPayment", "Order ID is null after PIN verification")
+                        Toast.makeText(context, "Payment failed: Order ID not found", Toast.LENGTH_LONG).show()
+                        resetUI()
+                    }
                 } ?: run {
-                    Log.e("QrisPayment", "userEmail is null, navigating to login")
+                    Log.e("QrisPayment", "userEmail is null after PIN verification")
+                    Toast.makeText(context, "Payment failed: User not found", Toast.LENGTH_LONG).show()
                     findNavController().navigate(R.id.action_qrisPaymentFragment_to_loginFragment)
                 }
             } else {
                 Log.e("QrisPayment", "PIN verification failed: $errorMessage")
                 Toast.makeText(context, "Payment failed: $errorMessage", Toast.LENGTH_LONG).show()
-                orderId = null
-                amount = null
-                binding.statusTextView.text = "Status: Scan or enter QR code"
-                binding.amountTextView.visibility = View.GONE
-                binding.btnValidatePayment.isEnabled = false
+                resetUI()
             }
-            isProcessingPayment = false
-            binding.btnValidatePayment.isEnabled = true
-            binding.loadingProgressBar.visibility = View.GONE
         }
 
         binding.btnBack.setOnClickListener {
@@ -363,10 +402,7 @@ class QrisPaymentFragment : Fragment() {
                 is SimulationResult.Failure -> {
                     Log.e("QrisPayment", "Simulation failed: ${result.message}")
                     Toast.makeText(context, "Payment failed: ${result.message}", Toast.LENGTH_LONG).show()
-                    orderId = null
-                    amount = null
-                    binding.statusTextView.text = "Status: Scan or enter QR code"
-                    binding.amountTextView.visibility = View.GONE
+                    resetUI()
                 }
             }
         }
@@ -381,6 +417,18 @@ class QrisPaymentFragment : Fragment() {
 
     private fun generateUniqueOrderId(): String {
         return "ORDER-${UUID.randomUUID().toString().replace("-", "").substring(0, 8)}"
+    }
+
+    private fun resetUI() {
+        orderId = null
+        amount = null
+        qrString = null
+        binding.statusTextView.text = "Status: Scan or enter QR code"
+        binding.amountTextView.visibility = View.GONE
+        binding.btnValidatePayment.isEnabled = false
+        isProcessingPayment = false
+        binding.btnValidatePayment.isEnabled = true
+        binding.loadingProgressBar.visibility = View.GONE
     }
 
     private suspend fun extractOrderIdAndAmount(qrContent: String) {
@@ -581,7 +629,7 @@ class QrisPaymentFragment : Fragment() {
                 }
             } catch (e: HttpException) {
                 val errorBody = e.response()?.errorBody()?.string() ?: "No response body"
-                Log.e("QrisPayment", "HTTP Error ${e.code()} for orderId=$orderId, URL=http://10.0.2.2:8000/api/verify-qris/$orderId: $errorBody")
+                Log.e("QrisPayment", "HTTP Error ${e.code()} for orderId=$orderId: $errorBody")
                 withContext(Dispatchers.Main) {
                     if (isAdded && view != null) {
                         val message = if (e.code() == 404) {

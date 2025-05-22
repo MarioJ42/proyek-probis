@@ -60,7 +60,10 @@ class HomeFragment : Fragment() {
         }
 
         binding.topUp.setOnClickListener {
-            viewModel.topUp(userEmail, 1000000.0)
+            val bundle = Bundle().apply {
+                putString("userEmail", userEmail)
+            }
+            findNavController().navigate(R.id.action_homeFragment_to_topUpFragment, bundle)
         }
 
         binding.transfer.setOnClickListener {

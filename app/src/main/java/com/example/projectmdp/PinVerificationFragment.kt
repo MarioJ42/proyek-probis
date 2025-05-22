@@ -42,7 +42,7 @@ class PinVerificationFragment : Fragment() {
 
         setupKeypad()
 
-        val userEmail = arguments?.getString("userEmail") ?: ""
+        val userEmail = arguments?.getString("userEmail")?.lowercase() ?: ""
         val recipient = arguments?.getString("recipient")
         val bankAccount = arguments?.getString("bankAccount")
         val amount = arguments?.getFloat("amount") ?: 0.0f
@@ -94,7 +94,7 @@ class PinVerificationFragment : Fragment() {
             return
         }
 
-        val userEmail = arguments?.getString("userEmail") ?: ""
+        val userEmail = arguments?.getString("userEmail")?.lowercase() ?: ""
         val recipient = arguments?.getString("recipient")
         val bankAccount = arguments?.getString("bankAccount")
         val amount = arguments?.getFloat("amount") ?: 0.0f
@@ -125,7 +125,7 @@ class PinVerificationFragment : Fragment() {
                 return@observe
             }
 
-            Log.d("PinVerification", "PIN verified, processing transferType: $transferType, amount: $amount")
+            Log.d("PinVerification", "PIN verified, processing transferType: $transferType, amount=$amount")
             lifecycleScope.launch {
                 when (transferType) {
                     "toUser" -> {
@@ -160,29 +160,11 @@ class PinVerificationFragment : Fragment() {
                     }
                     "qrisPayment" -> {
                         if (orderId != null && qrString != null) {
-                            Log.d("PinVerification", "Simulating QRIS payment: orderId=$orderId, amount=$amount")
-                            viewModel.simulateQrisPayment(orderId, amount.toDouble())
-                            viewModel.simulationResult.observe(viewLifecycleOwner) { result ->
-                                when (result) {
-                                    is SimulationResult.Success -> {
-                                        Log.d("PinVerification", "QRIS payment successful, setting result and navigating up")
-                                        Toast.makeText(requireContext(), "Payment successful", Toast.LENGTH_SHORT).show()
-                                        setFragmentResult("pin_verification_result", Bundle().apply {
-                                            putBoolean("success", true)
-                                        })
-                                        findNavController().navigateUp()
-                                    }
-                                    is SimulationResult.Failure -> {
-                                        Log.e("PinVerification", "QRIS payment failed: ${result.message}")
-                                        Toast.makeText(requireContext(), "Payment failed: ${result.message}", Toast.LENGTH_LONG).show()
-                                        setFragmentResult("pin_verification_result", Bundle().apply {
-                                            putBoolean("success", false)
-                                            putString("errorMessage", result.message)
-                                        })
-                                        findNavController().navigateUp()
-                                    }
-                                }
-                            }
+                            Log.d("PinVerification", "PIN verified for QRIS payment: orderId=$orderId, amount=$amount")
+                            setFragmentResult("pin_verification_result", Bundle().apply {
+                                putBoolean("success", true)
+                            })
+                            findNavController().navigateUp()
                         } else {
                             Log.e("PinVerification", "Invalid QRIS payment data: orderId=$orderId, qrString=$qrString")
                             Toast.makeText(requireContext(), "Invalid QRIS payment data", Toast.LENGTH_SHORT).show()
