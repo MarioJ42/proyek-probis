@@ -63,7 +63,7 @@ class GetPremiumFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val userEmail = arguments?.getString("userEmail")
+        val userEmail = arguments?.getString("userEmail")?.lowercase()
         if (userEmail != null) {
             viewModel.setUserEmail(userEmail)
         } else {
@@ -90,6 +90,8 @@ class GetPremiumFragment : Fragment() {
                 Log.d("GetPremiumFragment", "User data received: email=${user.email}, balance=${user.balance}")
             } else {
                 Log.e("GetPremiumFragment", "User data is null")
+                Toast.makeText(context, "User data not found", Toast.LENGTH_SHORT).show()
+                findNavController().navigateUp()
             }
         }
 
@@ -101,11 +103,18 @@ class GetPremiumFragment : Fragment() {
             }
         }
 
-        viewModel.topUpResult.observe(viewLifecycleOwner) { success ->
-            if (success != null) {
-                Log.d("GetPremiumFragment", "Top-up result: $success")
-                if (!success) {
-                    Toast.makeText(context, "Failed to update balance", Toast.LENGTH_LONG).show()
+        viewModel.topUpResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is TopUpResult.Success -> {
+                    Log.d("GetPremiumFragment", "Balance deduction successful: ${result.message}")
+                    Toast.makeText(context, "Balance deducted successfully", Toast.LENGTH_SHORT).show()
+                }
+                is TopUpResult.Failure -> {
+                    Log.e("GetPremiumFragment", "Balance deduction failed: ${result.message}")
+                    Toast.makeText(context, "Balance deduction failed: ${result.message}", Toast.LENGTH_LONG).show()
+                }
+                null -> {
+                    Log.d("GetPremiumFragment", "Top-up result is null")
                 }
             }
         }
@@ -150,7 +159,8 @@ class GetPremiumFragment : Fragment() {
 
                     // Step 4: Deduct balance
                     Log.d("GetPremiumFragment", "Deducting balance for email=${user.email}")
-                    viewModel.topUp(user.email, -500000.0)
+                    val orderId = "premium_${System.currentTimeMillis()}"
+                    viewModel.topUpBalance(user.email, -500000.0, orderId)
 
                     // Step 5: Wait for updates and navigate
                     withContext(Dispatchers.IO) {
@@ -179,15 +189,15 @@ class GetPremiumFragment : Fragment() {
         Log.d("GetPremiumFragment", "Uploading KTP image to Imgur: ${file.absolutePath}")
 
         val response = ImgurClient.apiService.uploadImage("Client-ID b1108bcbfd4178d", body)
-        Log.d("GetPremiumFragment", "Imgur response: success=${response.success}, status=${response.success}, data=${response.data}")
+        Log.d("GetPremiumFragment", "Imgur response: success=${response.success}, status=${response.status}, data=${response.data}")
 
         if (response.success && response.data != null) {
             val photoUrl = response.data.link
             Log.d("GetPremiumFragment", "KTP image uploaded successfully, URL: $photoUrl")
             return photoUrl
         } else {
-            Log.e("GetPremiumFragment", "Failed to upload KTP photo to Imgur: success=${response.success}, status=${response.success}")
-            throw Exception("Failed to upload KTP photo to Imgur: status=${response.success}")
+            Log.e("GetPremiumFragment", "Failed to upload KTP photo to Imgur: success=${response.success}, status=${response.status}")
+            throw Exception("Failed to upload KTP photo to Imgur: status=${response.status}")
         }
     }
 

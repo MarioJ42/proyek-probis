@@ -21,6 +21,7 @@ interface ImgurApiService {
 
 data class ImgurResponse(
     val success: Boolean,
+    val status: Int,
     val data: ImgurData?
 )
 

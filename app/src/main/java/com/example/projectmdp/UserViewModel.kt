@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 
 sealed class PaymentResult {
     data class Success(val amount: Double) : PaymentResult()
@@ -71,9 +72,9 @@ class UserViewModel : ViewModel() {
 
     fun setUserEmail(email: String) {
         Log.d("UserViewModel", "Setting user email: $email")
-        _userEmail.value = email
-        fetchUser(email)
-        fetchPremiumStatus(email)
+        _userEmail.value = email.lowercase()
+        fetchUser(email.lowercase())
+        fetchPremiumStatus(email.lowercase())
     }
 
     fun isOrderSimulated(orderId: String): Boolean {
@@ -110,7 +111,7 @@ class UserViewModel : ViewModel() {
     fun login(email: String, password: String) {
         viewModelScope.launch {
             try {
-                val snapshot = usersCollection.whereEqualTo("email", email).get().await()
+                val snapshot = usersCollection.whereEqualTo("email", email.lowercase()).get().await()
                 Log.d(
                     "UserViewModel",
                     "Login query for email: $email, snapshot size: ${snapshot.size()}"
@@ -270,7 +271,7 @@ class UserViewModel : ViewModel() {
     fun topUpBalance(email: String, amount: Double, orderId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (amount <= 0) {
+                if (amount == 0.0) {
                     _topUpResult.postValue(TopUpResult.Failure("Invalid top-up amount"))
                     Log.e("UserViewModel", "Invalid top-up amount: $amount, orderId=$orderId")
                     return@launch
@@ -290,13 +291,18 @@ class UserViewModel : ViewModel() {
                     Log.e("UserViewModel", "Failed to parse user data for email=$normalizedEmail")
                     return@launch
                 }
+                if (amount < 0 && user.balance + amount < 0) {
+                    _topUpResult.postValue(TopUpResult.Failure("Insufficient balance"))
+                    Log.e("UserViewModel", "Insufficient balance: balance=${user.balance}, amount=$amount")
+                    return@launch
+                }
                 Log.d(
                     "UserViewModel",
                     "Processing top-up: orderId=$orderId, amount=$amount, email=$normalizedEmail"
                 )
                 val transaksi = Transaksi(
                     userEmail = normalizedEmail,
-                    type = "TopUp Saldo",
+                    type = if (amount > 0) "TopUp Saldo" else "Premium Deduction",
                     recipient = "System",
                     amount = amount,
                     timestamp = com.google.firebase.Timestamp.now(),
@@ -308,10 +314,10 @@ class UserViewModel : ViewModel() {
                 usersCollection.document(userDoc.id).update("balance", newBalance).await()
                 _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
                 _balance.postValue(newBalance)
-                _topUpResult.postValue(TopUpResult.Success("Top-up successful"))
+                _topUpResult.postValue(TopUpResult.Success("Balance update successful"))
                 Log.d("UserViewModel", "Top-up completed: orderId=$orderId, newBalance=$newBalance")
             } catch (e: Exception) {
-                _topUpResult.postValue(TopUpResult.Failure("Top-up failed: ${e.message}"))
+                _topUpResult.postValue(TopUpResult.Failure("Balance update failed: ${e.message}"))
                 Log.e("UserViewModel", "Top-up error: orderId=$orderId, error=${e.message}")
             }
         }
@@ -442,7 +448,7 @@ class UserViewModel : ViewModel() {
                 )
                 logTransaction(transaksi)
 
-                fetchUser(fromEmail)
+                fetchUser(fromEmail.lowercase())
                 Log.d(
                     "UserViewModel",
                     "Transfer successful: New sender balance=${_user.value?.balance}"
@@ -492,7 +498,7 @@ class UserViewModel : ViewModel() {
                 )
                 logTransaction(transaksi)
 
-                fetchUser(userEmail)
+                fetchUser(userEmail.lowercase())
                 Log.d(
                     "UserViewModel",
                     "Bank transfer successful: New balance=${_user.value?.balance}"
@@ -534,6 +540,40 @@ class UserViewModel : ViewModel() {
         }
     }
 
+    fun updatePremiumStatus(email: String, ktpUrl: String, requestPremium: Boolean) {
+        viewModelScope.launch {
+            try {
+                val normalizedEmail = email.lowercase()
+                val snapshot = premiumCollection.whereEqualTo("userEmail", normalizedEmail).get().await()
+                if (!snapshot.isEmpty) {
+                    val docId = snapshot.documents[0].id
+                    premiumCollection.document(docId).update(
+                        mapOf(
+                            "ktpPhoto" to ktpUrl,
+                            "requestPremium" to requestPremium,
+                            "premium" to false // Ensure premium is false until approved
+                        )
+                    ).await()
+                    Log.d("UserViewModel", "Updated premium request for email=$normalizedEmail, ktpUrl=$ktpUrl, requestPremium=$requestPremium")
+                    fetchPremiumStatus(normalizedEmail)
+                } else {
+                    val newPremium = Premium(
+                        userEmail = normalizedEmail,
+                        ktpPhoto = ktpUrl,
+                        requestPremium = requestPremium,
+                        premium = false
+                    )
+                    val docRef = premiumCollection.add(newPremium).await()
+                    Log.d("UserViewModel", "Created premium request for email=$normalizedEmail, docId=${docRef.id}")
+                    fetchPremiumStatus(normalizedEmail)
+                }
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Error updating premium status for email=$email: ${e.message}", e)
+                _updatePremiumError.postValue("Failed to update premium status: ${e.message}")
+            }
+        }
+    }
+
     fun simulateQrisPayment(orderId: String, amount: Double, userEmail: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -567,7 +607,7 @@ class UserViewModel : ViewModel() {
                     simulatedOrders.add(orderId)
                     _simulationResult.postValue(SimulationResult.Success(response.message ?: "Payment successful"))
                     Log.d("UserViewModel", "QRIS payment simulated: orderId=$orderId")
-                    fetchUser(userEmail)
+                    fetchUser(userEmail.lowercase())
                 } else {
                     _simulationResult.postValue(SimulationResult.Failure(response.message ?: "Simulation failed"))
                     Log.e("UserViewModel", "QRIS simulation failed: orderId=$orderId, message=${response.message}")

@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     id("kotlin-kapt")
     id("com.google.gms.google-services")
-    id ("androidx.navigation.safeargs.kotlin")
+    id("androidx.navigation.safeargs.kotlin")
 }
 
 android {
@@ -40,66 +40,55 @@ android {
 }
 
 dependencies {
-    // Use Firebase BOM for version consistency
+    // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    implementation(libs.firebase.database)
+    implementation(libs.firebase.firestore.ktx)
 
+    // AndroidX Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
+    implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.activity.ktx)
-    implementation(libs.androidx.constraintlayout)
+
+    // Navigation
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
-    implementation(libs.firebase.database)
-    implementation(libs.firebase.firestore.ktx)
-    implementation(libs.androidx.lifecycle.viewmodel.ktx)
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlin.stdlib)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
 
+    // Lifecycle & ViewModel
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.core)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
 
     // Room Database
     implementation(libs.androidx.room.runtime)
-    kapt(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
+    kapt(libs.androidx.room.compiler)
 
-    // Retrofit and OkHttp for API calls
+    // Networking
     implementation(libs.retrofit)
     implementation(libs.okhttp)
-    implementation(libs.okhttp.logging.interceptor) // Already included
-
-    // Moshi for JSON conversion
+    implementation(libs.okhttp.logging.interceptor)
     implementation(libs.moshi)
     implementation(libs.moshi.kotlin)
-    kapt(libs.moshi.kotlin.codegen)
     implementation(libs.retrofit.converter.moshi)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
+    kapt(libs.moshi.kotlin.codegen)
 
-    // Picasso for image loading
+    // Image Loading
     implementation(libs.picasso)
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    kapt("com.github.bumptech.glide:compiler:4.16.0")
 
-    // Google ML Kit Barcode Scanning for QR code scanning
+    // ML Kit Barcode Scanning
     implementation(libs.mlkit.barcode.scanning)
 
-
-    implementation ("com.github.bumptech.glide:glide:4.16.0") // Updated to latest 4.x version
-    kapt ("com.github.bumptech.glide:compiler:4.16.0")
-
-    implementation ("com.squareup.okhttp3:logging-interceptor:4.12.0")
-
-    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-
-
-    implementation ("androidx.navigation:navigation-fragment-ktx:2.7.7")
-    implementation ("androidx.navigation:navigation-ui-ktx:2.7.7")
-
-    implementation ("com.squareup.moshi:moshi-kotlin:1.15.1")
-    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation ("com.squareup.retrofit2:converter-moshi:2.9.0")
-
-    implementation ("com.github.bumptech.glide:glide:4.16.0")
-    annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
+    // Testing
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }
