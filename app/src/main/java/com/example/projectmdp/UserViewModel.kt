@@ -34,6 +34,7 @@ class UserViewModel : ViewModel() {
     private val usersCollection = db.collection("users")
     private val transactionsCollection = db.collection("transactions")
     private val qrisPaymentsCollection = db.collection("qris_payments")
+    private val simulatedOrders = mutableSetOf<String>()
 
     private val _user = MutableLiveData<User?>()
     val user: LiveData<User?> get() = _user
@@ -63,6 +64,10 @@ class UserViewModel : ViewModel() {
     fun setUserEmail(email: String) {
         _userEmail.value = email
         fetchUser(email)
+    }
+
+    fun isOrderSimulated(orderId: String): Boolean {
+        return simulatedOrders.contains(orderId)
     }
 
     private fun createAdminUser() {
@@ -397,6 +402,12 @@ class UserViewModel : ViewModel() {
     fun simulateQrisPayment(orderId: String, amount: Double, userEmail: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                if (simulatedOrders.contains(orderId)) {
+                    Log.d("UserViewModel", "Skipping duplicate simulation for orderId=$orderId")
+                    _simulationResult.postValue(SimulationResult.Success("Payment already processed"))
+                    return@launch
+                }
+
                 Log.d(
                     "UserViewModel",
                     "Starting simulateQrisPayment for orderId: $orderId, amount: $amount, userEmail: $userEmail"
@@ -405,33 +416,6 @@ class UserViewModel : ViewModel() {
                 if (amount <= 0) {
                     _simulationResult.postValue(SimulationResult.Failure("Invalid payment amount"))
                     Log.e("UserViewModel", "Invalid QRIS amount: $amount, orderId=$orderId")
-                    return@launch
-                }
-
-                // Verify user and balance
-                val snapshot =
-                    usersCollection.whereEqualTo("email", userEmail.lowercase()).get().await()
-                if (snapshot.isEmpty) {
-                    _simulationResult.postValue(SimulationResult.Failure("User not found"))
-                    Log.e("UserViewModel", "User not found for QRIS payment: email=$userEmail")
-                    return@launch
-                }
-
-                val userDoc = snapshot.documents[0]
-                val user = userDoc.toObject(User::class.java)
-                if (user == null) {
-                    _simulationResult.postValue(SimulationResult.Failure("Failed to parse user data"))
-                    Log.e("UserViewModel", "Failed to parse user data for email=$userEmail")
-                    return@launch
-                }
-
-                // For top-up transactions, skip balance check as it's an addition
-                if (!orderId.startsWith("TOPUP-") && user.balance < amount) {
-                    _simulationResult.postValue(SimulationResult.Failure("Insufficient balance"))
-                    Log.e(
-                        "UserViewModel",
-                        "Insufficient balance: email=$userEmail, balance=${user.balance}, amount=$amount"
-                    )
                     return@launch
                 }
 
@@ -447,61 +431,14 @@ class UserViewModel : ViewModel() {
                 val response = App.api.simulateQrisPayment(request)
 
                 if (response.success && response.status == "settlement") {
-                    // Update Firestore balance
-                    val newBalance = if (orderId.startsWith("TOPUP-")) {
-                        user.balance + amount // Top-up: add to balance
-                    } else {
-                        user.balance - amount // Payment: subtract from balance
-                    }
-                    usersCollection.document(userDoc.id).update("balance", newBalance).await()
-
-                    // Log transaction
-                    val transaksi = Transaksi(
-                        userEmail = userEmail.lowercase(),
-                        type = if (orderId.startsWith("TOPUP-")) "TopUp Saldo" else "QRIS Payment",
-                        recipient = "System",
-                        amount = amount,
-                        timestamp = com.google.firebase.Timestamp.now(),
-                        status = "Completed"
-                    )
-                    transactionsCollection.add(transaksi).await()
-
-                    // Update qris_payments status only for non-top-up transactions
-                    if (!orderId.startsWith("TOPUP-")) {
-                        val paymentSnapshot = qrisPaymentsCollection.document(orderId).get().await()
-                        if (paymentSnapshot.exists()) {
-                            qrisPaymentsCollection.document(orderId).update("status", "settlement")
-                                .await()
-                        } else {
-                            Log.w(
-                                "UserViewModel",
-                                "No qris_payments document found for orderId=$orderId, skipping update"
-                            )
-                        }
-                    }
-
-                    // Update local state
-                    _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
-                    _balance.postValue(newBalance)
-                    _simulationResult.postValue(
-                        SimulationResult.Success(
-                            response.message ?: "Payment successful"
-                        )
-                    )
-                    Log.d(
-                        "UserViewModel",
-                        "QRIS payment simulated: orderId=$orderId, newBalance=$newBalance"
-                    )
+                    simulatedOrders.add(orderId)
+                    _simulationResult.postValue(SimulationResult.Success(response.message ?: "Payment successful"))
+                    Log.d("UserViewModel", "QRIS payment simulated: orderId=$orderId")
+                    // Fetch updated user data to reflect balance
+                    fetchUser(userEmail)
                 } else {
-                    _simulationResult.postValue(
-                        SimulationResult.Failure(
-                            response.message ?: "Simulation failed"
-                        )
-                    )
-                    Log.e(
-                        "UserViewModel",
-                        "QRIS simulation failed: orderId=$orderId, message=${response.message}"
-                    )
+                    _simulationResult.postValue(SimulationResult.Failure(response.message ?: "Simulation failed"))
+                    Log.e("UserViewModel", "QRIS simulation failed: orderId=$orderId, message=${response.message}")
                 }
             } catch (e: HttpException) {
                 val errorBody = e.response()?.errorBody()?.string() ?: "No response body"
@@ -511,16 +448,10 @@ class UserViewModel : ViewModel() {
                     else -> "HTTP error ${e.code()}: $errorBody"
                 }
                 _simulationResult.postValue(SimulationResult.Failure(message))
-                Log.e(
-                    "UserViewModel",
-                    "HTTP error in QRIS simulation: orderId=$orderId, code=${e.code()}, error=$errorBody"
-                )
+                Log.e("UserViewModel", "HTTP error in QRIS simulation: orderId=$orderId, code=${e.code()}, error=$errorBody")
             } catch (e: Exception) {
                 _simulationResult.postValue(SimulationResult.Failure("Payment failed: ${e.message}"))
-                Log.e(
-                    "UserViewModel",
-                    "QRIS simulation error: orderId=$orderId, error=${e.message}"
-                )
+                Log.e("UserViewModel", "QRIS simulation error: orderId=$orderId, error=${e.message}")
             }
         }
     }

@@ -92,7 +92,7 @@ class TopUpFragment : Fragment() {
             webViewClient = object : WebViewClient() {
                 private var lastProcessedUrl: String? = null
                 private var lastRedirectTime: Long = 0
-                private val debounceInterval = 1000L // 1 second
+                private val debounceInterval = 2000L // Increased to 2 seconds
 
                 override fun shouldOverrideUrlLoading(
                     view: WebView?,
@@ -117,7 +117,7 @@ class TopUpFragment : Fragment() {
                         url.contains("success") || url.contains("finish") || url.contains("transaction_status=settlement") -> {
                             val localOrderId = orderId
                             val localAmount = amount
-                            if (localOrderId != null && localAmount != null && !hasSimulated) {
+                            if (localOrderId != null && localAmount != null && !viewModel.isOrderSimulated(localOrderId)) {
                                 Log.d(
                                     "TopUpFragment",
                                     "Payment successful, triggering simulation for orderId=$localOrderId"
@@ -345,11 +345,7 @@ class TopUpFragment : Fragment() {
                     is SimulationResult.Success -> {
                         Log.d("TopUpFragment", "Simulation success: ${result.message}")
                         orderId?.let {
-                            viewModel.topUpBalance(
-                                userEmail,
-                                localAmount,
-                                it
-                            )
+                            viewModel.topUpBalance(userEmail, localAmount, it)
                         } ?: run {
                             Log.e("TopUpFragment", "Order ID is null during simulation success")
                             Toast.makeText(
@@ -395,7 +391,7 @@ class TopUpFragment : Fragment() {
     }
 
     private fun simulatePayment(orderId: String, amount: Double, userEmail: String) {
-        if (hasSimulated) {
+        if (viewModel.isOrderSimulated(orderId)) {
             Log.d("TopUpFragment", "Skipping redundant simulation for orderId=$orderId")
             return
         }
@@ -447,6 +443,7 @@ class TopUpFragment : Fragment() {
             }
         }
     }
+
     private suspend fun verifyPaymentStatus(orderId: String, userEmail: String) {
         val maxAttempts = 5
         val delayBetweenAttempts = 3000L
@@ -464,7 +461,7 @@ class TopUpFragment : Fragment() {
                         Log.d("TopUpFragment", "Verify attempt ${attempt + 1}: status=${response.status}, amount=${response.amount}")
                         if (response.success && (response.status == "settlement" || response.status == "capture")) {
                             withContext(Dispatchers.Main) {
-                                if (isAdded && !hasSimulated) {
+                                if (isAdded && !viewModel.isOrderSimulated(orderId)) {
                                     Log.d("TopUpFragment", "Payment settled, triggering simulation for orderId=$orderId")
                                     simulatePayment(orderId, response.amount?.toDouble() ?: 0.0, userEmail)
                                 }
