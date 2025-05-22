@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.projectmdp.network.SimulateQrisRequest
+import com.example.projectmdp.network.UpdateBalanceRequest
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
@@ -252,7 +253,8 @@ class UserViewModel : ViewModel() {
                     recipient = "System",
                     amount = amount,
                     timestamp = com.google.firebase.Timestamp.now(),
-                    status = "Completed"
+                    status = "Completed",
+                    orderId = orderId
                 )
                 transactionsCollection.add(transaksi).await()
                 val newBalance = user.balance + amount
@@ -264,6 +266,92 @@ class UserViewModel : ViewModel() {
             } catch (e: Exception) {
                 _topUpResult.postValue(TopUpResult.Failure("Top-up failed: ${e.message}"))
                 Log.e("UserViewModel", "Top-up error: orderId=$orderId, error=${e.message}")
+            }
+        }
+    }
+
+    fun processQrisPayment(email: String, orderId: String, amount: Double) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                if (amount <= 0) {
+                    _paymentResult.postValue(PaymentResult.Failure("Invalid payment amount"))
+                    Log.e("UserViewModel", "Invalid payment amount: $amount, orderId=$orderId")
+                    throw IllegalArgumentException("Invalid payment amount")
+                }
+                val normalizedEmail = email.lowercase()
+                val userSnapshot = usersCollection.whereEqualTo("email", normalizedEmail).get().await()
+                if (userSnapshot.isEmpty) {
+                    _paymentResult.postValue(PaymentResult.Failure("User not found"))
+                    Log.e("UserViewModel", "User not found for payment: email=$normalizedEmail")
+                    throw IllegalArgumentException("User not found")
+                }
+                val userDoc = userSnapshot.documents[0]
+                val user = userDoc.toObject(User::class.java)
+                if (user == null) {
+                    _paymentResult.postValue(PaymentResult.Failure("Failed to parse user data"))
+                    Log.e("UserViewModel", "Failed to parse user data for email=$normalizedEmail")
+                    throw IllegalArgumentException("Failed to parse user data")
+                }
+                if (user.balance < amount) {
+                    _paymentResult.postValue(PaymentResult.Failure("Insufficient balance"))
+                    Log.e("UserViewModel", "Insufficient balance: balance=${user.balance}, amount=$amount")
+                    throw IllegalArgumentException("Insufficient balance")
+                }
+                Log.d(
+                    "UserViewModel",
+                    "Processing QRIS payment: orderId=$orderId, amount=$amount, email=$normalizedEmail"
+                )
+
+                val newBalance = user.balance - amount
+                usersCollection.document(userDoc.id).update("balance", newBalance).await()
+
+                val transaksi = Transaksi(
+                    userEmail = normalizedEmail,
+                    type = "QRIS Payment",
+                    recipient = "Merchant",
+                    amount = amount,
+                    timestamp = com.google.firebase.Timestamp.now(),
+                    status = "Completed",
+                    orderId = orderId
+                )
+                logTransaction(transaksi)
+
+                val response = try {
+                    App.api.updateBalance(
+                        UpdateBalanceRequest(
+                            user_email = normalizedEmail,
+                            amount = -amount.toInt(),
+                            order_id = orderId
+                        )
+                    )
+                } catch (e: HttpException) {
+                    Log.e("UserViewModel", "Backend update failed with HTTP ${e.code()}: ${e.message()}")
+                    usersCollection.document(userDoc.id).update("balance", user.balance).await()
+                    _paymentResult.postValue(PaymentResult.Failure("Backend update failed: HTTP ${e.code()}"))
+                    return@launch
+                } catch (e: Exception) {
+                    Log.e("UserViewModel", "Unexpected backend error: ${e.message}", e)
+                    usersCollection.document(userDoc.id).update("balance", user.balance).await()
+                    _paymentResult.postValue(PaymentResult.Failure("Backend update failed: ${e.message}"))
+                    return@launch
+                }
+
+                if (!response.success) {
+                    usersCollection.document(userDoc.id).update("balance", user.balance).await()
+                    _paymentResult.postValue(PaymentResult.Failure("Backend update failed: ${response.message}"))
+                    Log.e("UserViewModel", "Backend balance update failed: ${response.message}")
+                    return@launch
+                }
+
+                _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
+                _balance.postValue(newBalance)
+                _paymentResult.postValue(PaymentResult.Success(amount))
+                Log.d("UserViewModel", "QRIS payment completed: orderId=$orderId, newBalance=$newBalance")
+
+                fetchUser(normalizedEmail)
+            } catch (e: Exception) {
+                _paymentResult.postValue(PaymentResult.Failure("Payment failed: ${e.message}"))
+                Log.e("UserViewModel", "QRIS payment error: orderId=$orderId, error=${e.message}", e)
             }
         }
     }
@@ -419,13 +507,11 @@ class UserViewModel : ViewModel() {
                     return@launch
                 }
 
-                // Verify payment status
                 val verifyResponse = App.api.verifyQrisPayment(orderId)
                 if (!verifyResponse.success) {
                     throw Exception("Payment verification failed: ${verifyResponse.message}")
                 }
 
-                // Call simulation API
                 Log.d("UserViewModel", "Simulating QRIS payment: orderId=$orderId, amount=$amount")
                 val request = SimulateQrisRequest(order_id = orderId, amount = amount)
                 val response = App.api.simulateQrisPayment(request)
@@ -434,7 +520,6 @@ class UserViewModel : ViewModel() {
                     simulatedOrders.add(orderId)
                     _simulationResult.postValue(SimulationResult.Success(response.message ?: "Payment successful"))
                     Log.d("UserViewModel", "QRIS payment simulated: orderId=$orderId")
-                    // Fetch updated user data to reflect balance
                     fetchUser(userEmail)
                 } else {
                     _simulationResult.postValue(SimulationResult.Failure(response.message ?: "Simulation failed"))

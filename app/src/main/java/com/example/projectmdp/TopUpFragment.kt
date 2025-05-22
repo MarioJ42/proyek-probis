@@ -71,16 +71,13 @@ class TopUpFragment : Fragment() {
             return
         }
 
-        // Lock orientation
         activity?.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LOCKED
 
-        // Setup progress dialog
         progressDialog = AlertDialog.Builder(requireContext())
             .setMessage("Processing payment, please wait...")
             .setCancelable(false)
             .create()
 
-        // Setup WebView
         binding.webView.apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
@@ -92,7 +89,7 @@ class TopUpFragment : Fragment() {
             webViewClient = object : WebViewClient() {
                 private var lastProcessedUrl: String? = null
                 private var lastRedirectTime: Long = 0
-                private val debounceInterval = 2000L // Increased to 2 seconds
+                private val debounceInterval = 2000L
 
                 override fun shouldOverrideUrlLoading(
                     view: WebView?,
@@ -122,14 +119,14 @@ class TopUpFragment : Fragment() {
                                     "TopUpFragment",
                                     "Payment successful, triggering simulation for orderId=$localOrderId"
                                 )
-                                verifyJob?.cancel() // Cancel verification job
+                                verifyJob?.cancel()
                                 simulatePayment(localOrderId, localAmount, userEmail)
                             }
                             return true
                         }
 
                         url.contains("unfinish") || url.contains("error") -> {
-                            verifyJob?.cancel() // Cancel verification job
+                            verifyJob?.cancel()
                             Toast.makeText(
                                 requireContext(),
                                 "Payment cancelled or failed",
@@ -466,7 +463,7 @@ class TopUpFragment : Fragment() {
                                     simulatePayment(orderId, response.amount?.toDouble() ?: 0.0, userEmail)
                                 }
                             }
-                            return@withTimeout // Exit loop on success
+                            return@withTimeout
                         } else if (!response.success) {
                             withContext(Dispatchers.Main) {
                                 if (isAdded) {
