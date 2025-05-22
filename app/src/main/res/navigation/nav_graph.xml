@@ -253,6 +253,10 @@
         android:id="@+id/adminProfileFragment2"
         android:name="com.example.projectmdp.AdminProfileFragment"
         android:label="AdminProfileFragment" >
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
         <action
             android:id="@+id/action_adminProfileFragment2_to_loginFragment"
             app:destination="@id/loginFragment" />
@@ -264,6 +268,12 @@
         android:id="@+id/allUsersFragment2"
         android:name="com.example.projectmdp.AllUsersFragment"
         android:label="AllUsersFragment" >
+
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+
         <action
             android:id="@+id/action_allUsersFragment2_to_premiumUsersFragment2"
             app:destination="@id/premiumUsersFragment2" />
@@ -278,6 +288,10 @@
         android:id="@+id/premiumUsersFragment2"
         android:name="com.example.projectmdp.PremiumUsersFragment"
         android:label="PremiumUsersFragment" >
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
         <action
             android:id="@+id/action_premiumUsersFragment2_to_allUsersFragment2"
             app:destination="@id/allUsersFragment2" />

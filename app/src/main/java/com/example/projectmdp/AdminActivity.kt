@@ -33,20 +33,20 @@ class AdminActivity : AppCompatActivity() {
                 userEmail?.let { putString("userEmail", it) }
             }
             when (item.itemId) {
-                R.id.nav_all_users -> {
-                    navController.navigate(R.id.nav_all_users, bundle)
+                R.id.allUsersFragment2 -> {
+                    navController.navigate(R.id.allUsersFragment2, bundle)
                     true
                 }
-                R.id.nav_premium_users -> {
-                    navController.navigate(R.id.nav_premium_users, bundle)
+                R.id.premiumUsersFragment2 -> {
+                    navController.navigate(R.id.premiumUsersFragment2, bundle)
                     true
                 }
-                R.id.nav_request_premium -> {
-                    navController.navigate(R.id.nav_request_premium, bundle)
+                R.id.requestPremiumFragment -> {
+                    navController.navigate(R.id.requestPremiumFragment, bundle)
                     true
                 }
-                R.id.nav_admin_profile ->{
-                    navController.navigate(R.id.nav_admin_profile, bundle)
+                R.id.adminProfileFragment2 ->{
+                    navController.navigate(R.id.adminProfileFragment2, bundle)
                     true
                 }
                 else -> false
@@ -63,10 +63,13 @@ class AdminActivity : AppCompatActivity() {
                 }
             }
         }
-//        if (savedInstanceState == null) {
-//            loadFragment(AllUsersFragment.newInstance(userEmail.toString()))
-//            binding.bottomNavigation.selectedItemId = R.id.nav_all_users
-//        }
+        if (savedInstanceState == null) {
+            val bundle = Bundle().apply {
+                putString("userEmail", userEmail)
+            }
+            navController.navigate(R.id.allUsersFragment2, bundle)
+            bottomNavigationView.selectedItemId = R.id.allUsersFragment2
+        }
     }
 
     private fun loadFragment(fragment: Fragment) {
