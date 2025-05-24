@@ -35,7 +35,10 @@ class HomeFragment : Fragment() {
             return
         }
 
-        viewModel.fetchUser(userEmail)
+        // Panggil fetchUser hanya jika email berubah
+        if (viewModel.userEmail.value != userEmail.lowercase()) {
+            viewModel.fetchUser(userEmail)
+        }
 
         viewModel.user.observe(viewLifecycleOwner) { user ->
             if (user != null) {
@@ -51,12 +54,13 @@ class HomeFragment : Fragment() {
             }
         }
 
+        // Satu observer untuk balance
         viewModel.balance.observe(viewLifecycleOwner) { balance ->
             val formattedBalance = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
                 .format(balance)
                 .replace("IDR", "Rp ")
             binding.balanceTextView.text = formattedBalance
-            Log.d("HomeFragment", "Balance updated: $balance")
+            Log.d("HomeFragment", "Balance updated: $balance, formatted: $formattedBalance")
         }
 
         binding.topUp.setOnClickListener {

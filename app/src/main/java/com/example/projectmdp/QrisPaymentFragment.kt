@@ -332,22 +332,19 @@ class QrisPaymentFragment : Fragment() {
                                                 .addOnFailureListener { e ->
                                                     Log.e("QrisPayment", "Failed to update Firestore payment status: ${e.message}")
                                                 }
+                                            // Hapus back stack hingga HomeFragment
+                                            findNavController().popBackStack(R.id.homeFragment, false)
+                                            // Navigasi ke HomeFragment
                                             val navBundle = Bundle().apply { putString("userEmail", email) }
                                             findNavController().navigate(R.id.action_qrisPaymentFragment_to_homeFragment, navBundle)
+                                            Log.d("QrisPayment", "Navigated to HomeFragment after QRIS payment for email=$email")
                                         }
                                     }
                                 } catch (e: Exception) {
                                     withContext(Dispatchers.Main) {
                                         if (isAdded) {
                                             Toast.makeText(context, "Payment failed: ${e.message}", Toast.LENGTH_LONG).show()
-                                            binding.statusTextView.text = "Status: Payment failed"
-                                            binding.amountTextView.visibility = View.GONE
-                                            binding.btnValidatePayment.isEnabled = false
-                                            orderId = null
-                                            amount = null
-                                            isProcessingPayment = false
-                                            binding.btnValidatePayment.isEnabled = true
-                                            binding.loadingProgressBar.visibility = View.GONE
+                                            resetUI()
                                         }
                                     }
                                     Log.e("QrisPayment", "Payment processing error: ${e.message}", e)

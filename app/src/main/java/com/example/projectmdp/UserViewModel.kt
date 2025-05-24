@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.projectmdp.network.SimulateQrisRequest
-import com.example.projectmdp.network.UpdateBalanceRequest
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
@@ -145,6 +144,11 @@ class UserViewModel : ViewModel() {
     }
 
     fun fetchUser(email: String) {
+        // Cek apakah user sudah ada di cache lokal
+        if (_user.value?.email == email.lowercase() && _user.value != null) {
+            Log.d("UserViewModel", "User already fetched for email=$email, using cached data")
+            return
+        }
         viewModelScope.launch {
             try {
                 val normalizedEmail = email.lowercase()
@@ -377,9 +381,13 @@ class UserViewModel : ViewModel() {
                     "Processing QRIS payment: orderId=$orderId, amount=$amount, email=$normalizedEmail"
                 )
 
+                // Gunakan transaksi untuk memastikan konsistensi pembaruan saldo
                 val newBalance = user.balance - amount
-                usersCollection.document(userDoc.id).update("balance", newBalance).await()
+                db.runTransaction { transaction ->
+                    transaction.update(userDoc.reference, "balance", newBalance)
+                }.await()
 
+                // Log transaksi
                 val transaksi = Transaksi(
                     userEmail = normalizedEmail,
                     type = "QRIS Payment",
@@ -391,39 +399,11 @@ class UserViewModel : ViewModel() {
                 )
                 logTransaction(transaksi)
 
-                val response = try {
-                    App.api.updateBalance(
-                        UpdateBalanceRequest(
-                            user_email = normalizedEmail,
-                            amount = -amount.toInt(),
-                            order_id = orderId
-                        )
-                    )
-                } catch (e: HttpException) {
-                    Log.e("UserViewModel", "Backend update failed with HTTP ${e.code()}: ${e.message()}")
-                    usersCollection.document(userDoc.id).update("balance", user.balance).await()
-                    _paymentResult.postValue(PaymentResult.Failure("Backend update failed: HTTP ${e.code()}"))
-                    return@launch
-                } catch (e: Exception) {
-                    Log.e("UserViewModel", "Unexpected backend error: ${e.message}", e)
-                    usersCollection.document(userDoc.id).update("balance", user.balance).await()
-                    _paymentResult.postValue(PaymentResult.Failure("Backend update failed: ${e.message}"))
-                    return@launch
-                }
-
-                if (!response.success) {
-                    usersCollection.document(userDoc.id).update("balance", user.balance).await()
-                    _paymentResult.postValue(PaymentResult.Failure("Backend update failed: ${response.message}"))
-                    Log.e("UserViewModel", "Backend balance update failed: ${response.message}")
-                    return@launch
-                }
-
+                // Perbarui state lokal
                 _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
                 _balance.postValue(newBalance)
                 _paymentResult.postValue(PaymentResult.Success(amount))
                 Log.d("UserViewModel", "QRIS payment completed: orderId=$orderId, newBalance=$newBalance")
-
-                fetchUser(normalizedEmail)
             } catch (e: Exception) {
                 _paymentResult.postValue(PaymentResult.Failure("Payment failed: ${e.message}"))
                 Log.e("UserViewModel", "QRIS payment error: orderId=$orderId, error=${e.message}", e)
