@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#6200ea"
+    android:background="@drawable/gradient_background"
     android:padding="16dp">
 
     <!-- Toolbar for back arrow and title -->
@@ -11,7 +11,7 @@
 android:id="@+id/toolbar"
 android:layout_width="match_parent"
 android:layout_height="?attr/actionBarSize"
-android:background="#6200ea"
+    android:background="@drawable/gradient_background"
 android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
 <ImageButton

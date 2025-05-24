@@ -3,8 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#6200EA">
+    android:background="@drawable/gradient_background">
 
+    <!-- Title -->
     <TextView
         android:id="@+id/transferTitle"
         android:layout_width="wrap_content"
@@ -12,6 +13,7 @@
         android:text="Transfer"
         android:textColor="#FFFFFF"
         android:textSize="24sp"
+        android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="16dp"
@@ -24,10 +26,13 @@
         android:layout_height="wrap_content"
         android:text="Back"
         android:backgroundTint="#B0BEC5"
+        android:textColor="#FFFFFF"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp"
-        android:layout_marginStart="48dp" />
+        android:layout_marginEnd="16dp" />
 
     <!-- Spinner for Premium Users -->
     <Spinner
@@ -35,10 +40,12 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:visibility="gone"
+        android:background="@android:color/white"
+        android:padding="8dp"
         app:layout_constraintTop_toBottomOf="@id/transferTitle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="24dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp" />
 
@@ -49,46 +56,74 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:visibility="visible"
+        android:padding="16dp"
+        android:background="@android:color/transparent"
         app:layout_constraintTop_toBottomOf="@id/transferTypeSpinner"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginTop="16dp"
         android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp">
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="To User"
-            android:textColor="#FFFFFF" />
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
-        <EditText
-            android:id="@+id/recipientEmail"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilRecipientEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Recipient Email"
-            android:background="@android:color/white"
-            android:textColor="#000000"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="12dp"
+            app:boxStrokeColor="#FFFFFF"
+            app:hintTextColor="#FFFFFF">
 
-        <EditText
-            android:id="@+id/amount"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/recipientEmail"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:inputType="textEmailAddress"
+                android:textColor="#212121"
+                android:textColorHint="#888888"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilAmount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Amount"
-            android:background="@android:color/white"
-            android:textColor="#000000"
-            android:inputType="numberDecimal"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="12dp"
+            app:boxStrokeColor="#FFFFFF"
+            app:hintTextColor="#FFFFFF">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/amount"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:inputType="numberDecimal"
+                android:textColor="#212121"
+                android:textColorHint="#888888"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <Button
             android:id="@+id/transferButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:text="Transfer"
             android:backgroundTint="#26A69A"
             android:textColor="#FFFFFF"
-            android:layout_marginTop="16dp" />
+            android:textSize="16sp"
+            android:layout_marginTop="24dp" />
     </LinearLayout>
 
     <!-- Bank Transfer Form -->
@@ -98,49 +133,74 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:visibility="gone"
+        android:padding="16dp"
+        android:background="@android:color/transparent"
         app:layout_constraintTop_toBottomOf="@id/transferTypeSpinner"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginTop="16dp"
         android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp">
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Bank Transfer (Premium)"
-            android:textColor="#FFFFFF" />
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
-        <EditText
-            android:id="@+id/bankAccountNumber"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilBankAccountNumber"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Bank Account Number"
-            android:background="@android:color/white"
-            android:textColor="#000000"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="12dp"
+            app:boxStrokeColor="#FFFFFF"
+            app:hintTextColor="#FFFFFF">
 
-        <EditText
-            android:id="@+id/bankAmount"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/bankAccountNumber"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:inputType="number"
+                android:textColor="#212121"
+                android:textColorHint="#888888"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilBankAmount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Amount"
-            android:background="@android:color/white"
-            android:textColor="#000000"
-            android:inputType="numberDecimal"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="12dp"
+            app:boxStrokeColor="#FFFFFF"
+            app:hintTextColor="#FFFFFF">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/bankAmount"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:inputType="numberDecimal"
+                android:textColor="#212121"
+                android:textColorHint="#888888"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <Button
             android:id="@+id/bankTransferButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:text="Bank Transfer"
             android:backgroundTint="#AB47BC"
             android:textColor="#FFFFFF"
-            android:layout_marginTop="16dp" />
+            android:textSize="16sp"
+            android:layout_marginTop="24dp" />
     </LinearLayout>
-
-    <!-- Bottom Navigation -->
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

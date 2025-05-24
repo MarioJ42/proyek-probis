@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#6200EA">
+    android:background="@drawable/gradient_background">
 
     <!-- Header -->
     <TextView
@@ -40,7 +40,7 @@
         app:layout_constraintTop_toBottomOf="@id/historyTitle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/nav_view"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:layout_margin="16dp">
 
         <TableLayout
@@ -110,16 +110,5 @@
             <!-- Dynamic Rows here -->
         </TableLayout>
     </ScrollView>
-
-    <!-- Bottom Navigation -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/nav_view"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:menu="@menu/bottom_navigation_menu"
-        android:background="@color/white" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

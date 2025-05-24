@@ -99,6 +99,8 @@ class TransferFragment : Fragment() {
             findNavController().navigate(R.id.action_transferFragment_to_pinVerificationFragment, bundle)
         }
 
+
+
         binding.bankTransferButton.setOnClickListener {
             val bankAccount = binding.bankAccountNumber.text.toString().trim()
             val amount = binding.bankAmount.text.toString().toDoubleOrNull() ?: 0.0
