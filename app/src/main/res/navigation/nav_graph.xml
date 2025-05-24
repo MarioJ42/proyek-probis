@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/loginFragment">
 
-    <!-- Global Actions -->
     <action
         android:id="@+id/action_global_loginFragment"
         app:destination="@id/loginFragment"
         app:popUpTo="@id/loginFragment"
         app:popUpToInclusive="true" />
 
-    <!-- Login Fragment -->
     <fragment
         android:id="@+id/loginFragment"
         android:name="com.example.projectmdp.LoginFragment"
@@ -32,7 +31,6 @@
     <action
         android:id="@+id/action_topUpFragment_to_loginFragment"
         app:destination="@id/loginFragment" />
-    <!-- Register Fragment -->
     <fragment
         android:id="@+id/registerFragment"
         android:name="com.example.projectmdp.RegisterFragment"
@@ -42,7 +40,6 @@
             app:destination="@id/loginFragment" />
     </fragment>
 
-    <!-- Home Fragment -->
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.example.projectmdp.HomeFragment"
@@ -71,7 +68,6 @@
             app:destination="@id/qrisPaymentFragment" />
     </fragment>
 
-    <!-- History Fragment -->
     <fragment
         android:id="@+id/historyFragment"
         android:name="com.example.projectmdp.HistoryFragment"
@@ -88,24 +84,8 @@
             app:destination="@id/homeFragment" />
     </fragment>
 
-    <!-- Investasi Tabungan Fragment -->
-    <fragment
-        android:id="@+id/investasiTabunganFragment"
-        android:name="com.example.projectmdp.InvestasiTabunganFragment"
-        android:label="InvestasiTabunganFragment">
-        <argument
-            android:name="userEmail"
-            app:argType="string"
-            android:defaultValue="" />
-        <action
-            android:id="@+id/action_investasiTabunganFragment_to_loginFragment"
-            app:destination="@id/loginFragment" />
-        <action
-            android:id="@+id/action_investasiTabunganFragment_to_homeFragment"
-            app:destination="@id/homeFragment" />
-    </fragment>
 
-    <!-- QRIS Payment Fragment -->
+
     <fragment
         android:id="@+id/qrisPaymentFragment"
         android:name="com.example.projectmdp.QrisPaymentFragment"
@@ -127,7 +107,6 @@
             app:popUpToInclusive="false" />
     </fragment>
 
-    <!-- Profile Fragment -->
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.example.projectmdp.ProfileFragment"
@@ -144,7 +123,6 @@
             app:destination="@id/getPremiumFragment" />
     </fragment>
 
-    <!-- Transfer Fragment -->
     <fragment
         android:id="@+id/transferFragment"
         android:name="com.example.projectmdp.TransferFragment"
@@ -161,7 +139,6 @@
             app:destination="@id/pinVerificationFragment" />
     </fragment>
 
-    <!-- Top Up Fragment -->
     <fragment
         android:id="@+id/topUpFragment"
         android:name="com.example.projectmdp.TopUpFragment"
@@ -178,7 +155,6 @@
             app:destination="@id/pinVerificationFragment" />
     </fragment>
 
-    <!-- Pin Verification Fragment -->
     <fragment
         android:id="@+id/pinVerificationFragment"
         android:name="com.example.projectmdp.PinVerificationFragment"
@@ -301,6 +277,43 @@
             android:id="@+id/action_premiumUsersFragment2_to_adminProfileFragment2"
             app:destination="@id/adminProfileFragment2" />
     </fragment>
+    <fragment
+        android:id="@+id/investasiTabunganFragment"
+        android:name="com.example.projectmdp.InvestasiTabunganFragment"
+        android:label="InvestasiTabunganFragment"
+        tools:layout="@layout/fragment_investasi_tabungan">
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_investasiTabunganFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_investasiTabunganFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_investasiTabunganFragment_to_depositPurchaseFragment"
+            app:destination="@id/depositPurchaseFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/depositPurchaseFragment"
+        android:name="com.example.projectmdp.DepositPurchaseFragment"
+        android:label="DepositPurchaseFragment"
+        tools:layout="@layout/fragment_deposit_purchase">
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_depositPurchaseFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_depositPurchaseFragment_to_investasiTabunganFragment"
+            app:destination="@id/investasiTabunganFragment" />
+    </fragment>
+
     <action android:id="@+id/action_global_adminProfileFragment2" app:destination="@id/adminProfileFragment2" />
     <action android:id="@+id/action_global_allUsersFragment2" app:destination="@id/allUsersFragment2" />
     <action android:id="@+id/action_global_premiumUsersFragment2" app:destination="@id/premiumUsersFragment2" />

@@ -6,12 +6,13 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.example.projectmdp.databinding.FragmentInvestasiTabunganBinding
+import com.example.projectmdp.databinding.FragmentDepositPurchaseBinding
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
@@ -19,12 +20,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import java.text.NumberFormat
-import java.text.SimpleDateFormat
-import java.util.Locale
+import java.util.UUID
 
-class InvestasiTabunganFragment : Fragment() {
-    private var _binding: FragmentInvestasiTabunganBinding? = null
+class DepositPurchaseFragment : Fragment() {
+    private var _binding: FragmentDepositPurchaseBinding? = null
     private val binding get() = _binding!!
     private val viewModel: UserViewModel by viewModels { UserViewModelFactory() }
     private var userEmail: String = ""
@@ -33,7 +32,7 @@ class InvestasiTabunganFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentInvestasiTabunganBinding.inflate(inflater, container, false)
+        _binding = FragmentDepositPurchaseBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -42,65 +41,68 @@ class InvestasiTabunganFragment : Fragment() {
 
         userEmail = arguments?.getString("userEmail") ?: ""
         if (userEmail.isEmpty()) {
-            findNavController().navigate(R.id.action_investasiTabunganFragment_to_loginFragment)
+            findNavController().navigate(R.id.action_depositPurchaseFragment_to_loginFragment)
             return
         }
 
         showPasswordConfirmationDialog { isVerified ->
             if (!isVerified) {
-                Toast.makeText(context, "Kata sandi salah, kembali ke beranda", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Kata sandi salah, kembali ke investasi", Toast.LENGTH_LONG).show()
                 val bundle = Bundle().apply { putString("userEmail", userEmail) }
-                findNavController().navigate(R.id.action_investasiTabunganFragment_to_homeFragment, bundle)
+                findNavController().navigate(R.id.action_depositPurchaseFragment_to_investasiTabunganFragment, bundle)
                 return@showPasswordConfirmationDialog
             }
 
-            fetchDepositData()
+            setupSpinner()
             setupListeners()
         }
 
         binding.btnBack.setOnClickListener {
             val bundle = Bundle().apply { putString("userEmail", userEmail) }
-            findNavController().navigate(R.id.action_investasiTabunganFragment_to_homeFragment, bundle)
+            findNavController().navigate(R.id.action_depositPurchaseFragment_to_investasiTabunganFragment, bundle)
         }
     }
 
-    private fun fetchDepositData() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val snapshot = Firebase.firestore.collection("deposits")
-                    .whereEqualTo("userEmail", userEmail.lowercase())
-                    .whereEqualTo("status", "Active")
-                    .get()
-                    .await()
-                withContext(Dispatchers.Main) {
-                    if (snapshot.isEmpty) {
-                        binding.balanceTextView.text = "Rp0"
-                        binding.interestRateTextView.text = "0%"
-                        binding.nextInterestDateTextView.text = "Belum ada deposito"
-                    } else {
-                        val deposit = snapshot.documents[0].toObject(Deposit::class.java)
-                        if (deposit != null) {
-                            val formatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
-                            binding.balanceTextView.text = formatter.format(deposit.amount)
-                            binding.interestRateTextView.text = "${deposit.interestRate}%"
-                            val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
-                            binding.nextInterestDateTextView.text = dateFormat.format(deposit.nextInterestDate.toDate())
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Gagal memuat data deposito: ${e.message}", Toast.LENGTH_LONG).show()
-                }
-                Log.e("InvestasiTabunganFragment", "Error fetching deposit: ${e.message}", e)
-            }
-        }
+    private fun setupSpinner() {
+        val options = arrayOf("Putar Kembali Bunga", "Cairkan ke Saldo")
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, options)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.interestOptionSpinner.adapter = adapter
     }
 
     private fun setupListeners() {
-        binding.buyDepositButton.setOnClickListener {
-            val bundle = Bundle().apply { putString("userEmail", userEmail) }
-            findNavController().navigate(R.id.action_investasiTabunganFragment_to_depositPurchaseFragment, bundle)
+        binding.confirmButton.setOnClickListener {
+            val amount = binding.amountInput.text.toString().toDoubleOrNull() ?: 0.0
+            if (amount < 5_000_000) {
+                Toast.makeText(context, "Jumlah minimum Rp5.000.000", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            showPasswordConfirmationDialog { isVerified ->
+                if (!isVerified) {
+                    Toast.makeText(context, "Kata sandi salah, pembelian dibatalkan", Toast.LENGTH_LONG).show()
+                    return@showPasswordConfirmationDialog
+                }
+
+                val interestOption = binding.interestOptionSpinner.selectedItem.toString()
+                val isReinvest = interestOption == "Putar Kembali Bunga"
+                val orderId = UUID.randomUUID().toString()
+                viewModel.createOrUpdateDeposit(userEmail, amount, 12, isReinvest, orderId)
+            }
+        }
+
+        // Update deposit result observer
+        viewModel.depositResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is DepositResult.Success -> {
+                    Toast.makeText(context, "Deposito berhasil ditambahkan", Toast.LENGTH_SHORT).show()
+                    val bundle = Bundle().apply { putString("userEmail", userEmail) }
+                    findNavController().navigate(R.id.action_depositPurchaseFragment_to_investasiTabunganFragment, bundle)
+                }
+                is DepositResult.Failure -> {
+                    Toast.makeText(context, "Gagal: ${result.message}", Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 

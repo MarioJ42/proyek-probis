@@ -332,12 +332,7 @@ class QrisPaymentFragment : Fragment() {
                                                 .addOnFailureListener { e ->
                                                     Log.e("QrisPayment", "Failed to update Firestore payment status: ${e.message}")
                                                 }
-                                            // Hapus back stack hingga HomeFragment
                                             findNavController().popBackStack(R.id.homeFragment, false)
-                                            // Navigasi ke HomeFragment
-                                            val navBundle = Bundle().apply { putString("userEmail", email) }
-                                            findNavController().navigate(R.id.action_qrisPaymentFragment_to_homeFragment, navBundle)
-                                            Log.d("QrisPayment", "Navigated to HomeFragment after QRIS payment for email=$email")
                                         }
                                     }
                                 } catch (e: Exception) {
@@ -369,16 +364,6 @@ class QrisPaymentFragment : Fragment() {
                 Log.e("QrisPayment", "PIN verification failed: $errorMessage")
                 Toast.makeText(context, "Payment failed: $errorMessage", Toast.LENGTH_LONG).show()
                 resetUI()
-            }
-        }
-
-        binding.btnBack.setOnClickListener {
-            userEmail?.let { email ->
-                val bundle = Bundle().apply { putString("userEmail", email) }
-                findNavController().navigate(R.id.action_qrisPaymentFragment_to_homeFragment, bundle)
-            } ?: run {
-                Toast.makeText(context, "User email not found", Toast.LENGTH_SHORT).show()
-                findNavController().navigate(R.id.action_qrisPaymentFragment_to_loginFragment)
             }
         }
 

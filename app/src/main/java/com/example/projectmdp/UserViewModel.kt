@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
+import java.util.Calendar
 
 sealed class PaymentResult {
     data class Success(val amount: Double) : PaymentResult()
@@ -32,12 +33,30 @@ sealed class TopUpResult {
     data class Failure(val message: String) : TopUpResult()
 }
 
+sealed class DepositResult {
+    data class Success(val message: String) : DepositResult()
+    data class Failure(val message: String) : DepositResult()
+}
+
+data class Deposit(
+    val userEmail: String = "",
+    val amount: Double = 0.0,
+    val interestRate: Double = 0.0,
+    val tenorMonths: Int = 0,
+    val isReinvest: Boolean = false,
+    val startDate: com.google.firebase.Timestamp = com.google.firebase.Timestamp.now(),
+    val nextInterestDate: com.google.firebase.Timestamp = com.google.firebase.Timestamp.now(),
+    val status: String = "Active",
+    val orderId: String = ""
+)
+
 class UserViewModel : ViewModel() {
     private val db = Firebase.firestore
     private val usersCollection = db.collection("users")
     private val premiumCollection = db.collection("premium")
     private val transactionsCollection = db.collection("transactions")
     private val qrisPaymentsCollection = db.collection("qris_payments")
+    private val depositsCollection = db.collection("deposits")
     private val simulatedOrders = mutableSetOf<String>()
 
     private val _user = MutableLiveData<User?>()
@@ -66,6 +85,9 @@ class UserViewModel : ViewModel() {
 
     private val _updatePremiumError = MutableLiveData<String?>()
     val updatePremiumError: LiveData<String?> get() = _updatePremiumError
+
+    private val _depositResult = MutableLiveData<DepositResult>()
+    val depositResult: LiveData<DepositResult> get() = _depositResult
 
     init {
         createAdminUser()
@@ -144,7 +166,6 @@ class UserViewModel : ViewModel() {
     }
 
     fun fetchUser(email: String) {
-        // Cek apakah user sudah ada di cache lokal
         if (_user.value?.email == email.lowercase() && _user.value != null) {
             Log.d("UserViewModel", "User already fetched for email=$email, using cached data")
             return
@@ -260,7 +281,6 @@ class UserViewModel : ViewModel() {
                 val updatedPhotoUrl = if (photoUrl.isEmpty() && currentUser?.photoUrl != null) currentUser.photoUrl else photoUrl
                 val updatedPhone = if (phone.isEmpty() && currentUser?.phone != null) currentUser.phone else phone
 
-                // Check if new email already exists (unless it's the same as the current email)
                 if (normalizedNewEmail != normalizedEmail) {
                     val emailSnapshot = usersCollection.whereEqualTo("email", normalizedNewEmail).get().await()
                     if (!emailSnapshot.isEmpty && emailSnapshot.documents[0].id != docId) {
@@ -274,21 +294,20 @@ class UserViewModel : ViewModel() {
                     "email" to normalizedNewEmail,
                     "photoUrl" to updatedPhotoUrl,
                     "phone" to updatedPhone.trim()
-                ).filterValues { it.toString().isNotEmpty() } // Remove empty updates
+                ).filterValues { it.toString().isNotEmpty() }
 
                 Log.d("UserViewModel", "Firestore update map: $updates")
 
                 usersCollection.document(docId).update(updates).await()
                 Log.d("UserViewModel", "Firestore update successful for docId=$docId")
 
-                // Update local state and fetch updated user
-                _userEmail.postValue(normalizedNewEmail) // Update email observer
+                _userEmail.postValue(normalizedNewEmail)
                 fetchUser(normalizedNewEmail)
                 Log.d("UserViewModel", "Updated profile: email=$email to newEmail=$normalizedNewEmail")
             } catch (e: Exception) {
                 Log.e("UserViewModel", "Update profile error for email=$email: ${e.message}", e)
                 withContext(Dispatchers.Main) {
-//                    Toast.makeText(requireContext(user.value.id), "Failed to update profile: ${e.message}", Toast.LENGTH_LONG).show()
+                    // Toast.makeText(requireContext(user.value.id), "Failed to update profile: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -350,6 +369,11 @@ class UserViewModel : ViewModel() {
     }
 
     fun processQrisPayment(email: String, orderId: String, amount: Double) {
+        if (isOrderSimulated(orderId)) {
+            _paymentResult.postValue(PaymentResult.Failure("Payment already processed"))
+            Log.d("UserViewModel", "Skipping duplicate QRIS payment for orderId=$orderId")
+            return
+        }
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 if (amount <= 0) {
@@ -381,13 +405,11 @@ class UserViewModel : ViewModel() {
                     "Processing QRIS payment: orderId=$orderId, amount=$amount, email=$normalizedEmail"
                 )
 
-                // Gunakan transaksi untuk memastikan konsistensi pembaruan saldo
                 val newBalance = user.balance - amount
                 db.runTransaction { transaction ->
                     transaction.update(userDoc.reference, "balance", newBalance)
                 }.await()
 
-                // Log transaksi
                 val transaksi = Transaksi(
                     userEmail = normalizedEmail,
                     type = "QRIS Payment",
@@ -398,8 +420,7 @@ class UserViewModel : ViewModel() {
                     orderId = orderId
                 )
                 logTransaction(transaksi)
-
-                // Perbarui state lokal
+                simulatedOrders.add(orderId)
                 _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
                 _balance.postValue(newBalance)
                 _paymentResult.postValue(PaymentResult.Success(amount))
@@ -553,7 +574,7 @@ class UserViewModel : ViewModel() {
                         mapOf(
                             "ktpPhoto" to ktpUrl,
                             "requestPremium" to requestPremium,
-                            "premium" to false // Ensure premium is false until approved
+                            "premium" to false
                         )
                     ).await()
                     Log.d("UserViewModel", "Updated premium request for email=$normalizedEmail, ktpUrl=$ktpUrl, requestPremium=$requestPremium")
@@ -626,6 +647,187 @@ class UserViewModel : ViewModel() {
             } catch (e: Exception) {
                 _simulationResult.postValue(SimulationResult.Failure("Payment failed: ${e.message}"))
                 Log.e("UserViewModel", "QRIS simulation error: orderId=$orderId, error=${e.message}")
+            }
+        }
+    }
+
+    fun createOrUpdateDeposit(email: String, amount: Double, tenorMonths: Int, isReinvest: Boolean, orderId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                if (amount < 5_000_000) {
+                    _depositResult.postValue(DepositResult.Failure("Minimum deposit is Rp5,000,000"))
+                    Log.e("UserViewModel", "Invalid deposit amount: $amount, orderId=$orderId")
+                    return@launch
+                }
+                val normalizedEmail = email.lowercase()
+                val userSnapshot = usersCollection.whereEqualTo("email", normalizedEmail).get().await()
+                if (userSnapshot.isEmpty) {
+                    _depositResult.postValue(DepositResult.Failure("User not found"))
+                    Log.e("UserViewModel", "User not found for deposit: email=$normalizedEmail")
+                    return@launch
+                }
+                val userDoc = userSnapshot.documents[0]
+                val user = userDoc.toObject(User::class.java)
+                if (user == null) {
+                    _depositResult.postValue(DepositResult.Failure("Failed to parse user data"))
+                    Log.e("UserViewModel", "Failed to parse user data for email=$normalizedEmail")
+                    return@launch
+                }
+                if (user.balance < amount) {
+                    _depositResult.postValue(DepositResult.Failure("Insufficient balance"))
+                    Log.e("UserViewModel", "Insufficient balance: balance=${user.balance}, amount=$amount")
+                    return@launch
+                }
+
+                val depositSnapshot = depositsCollection
+                    .whereEqualTo("userEmail", normalizedEmail)
+                    .whereEqualTo("status", "Active")
+                    .get()
+                    .await()
+
+                val newBalance = user.balance - amount
+                db.runTransaction { transaction ->
+                    transaction.update(userDoc.reference, "balance", newBalance)
+                }.await()
+
+                val transaksi = Transaksi(
+                    userEmail = normalizedEmail,
+                    type = "Deposito",
+                    recipient = "Bank",
+                    amount = amount,
+                    timestamp = com.google.firebase.Timestamp.now(),
+                    status = "Completed",
+                    orderId = orderId
+                )
+                logTransaction(transaksi)
+
+                val startDate = com.google.firebase.Timestamp.now()
+                val calendar = Calendar.getInstance()
+                calendar.time = startDate.toDate()
+                calendar.add(Calendar.DAY_OF_MONTH, 30)
+                val nextInterestDate = com.google.firebase.Timestamp(calendar.time)
+
+                if (depositSnapshot.isEmpty) {
+                    val totalAmount = amount
+                    val interestRate = when {
+                        totalAmount >= 50_000_000 -> 3.0
+                        totalAmount >= 20_000_000 -> 2.5
+                        else -> 2.0
+                    }
+
+                    val deposit = Deposit(
+                        userEmail = normalizedEmail,
+                        amount = totalAmount,
+                        interestRate = interestRate,
+                        tenorMonths = tenorMonths,
+                        isReinvest = isReinvest,
+                        startDate = startDate,
+                        nextInterestDate = nextInterestDate,
+                        status = "Active",
+                        orderId = orderId
+                    )
+                    depositsCollection.add(deposit).await()
+                    Log.d("UserViewModel", "New deposit created: orderId=$orderId, amount=$totalAmount, interestRate=$interestRate")
+                } else {
+                    val depositDoc = depositSnapshot.documents[0]
+                    val existingDeposit = depositDoc.toObject(Deposit::class.java)
+                    if (existingDeposit == null) {
+                        _depositResult.postValue(DepositResult.Failure("Failed to parse deposit data"))
+                        Log.e("UserViewModel", "Failed to parse deposit data for email=$normalizedEmail")
+                        return@launch
+                    }
+                    val totalAmount = existingDeposit.amount + amount
+                    val interestRate = when {
+                        totalAmount >= 50_000_000 -> 3.0
+                        totalAmount >= 20_000_000 -> 2.5
+                        else -> 2.0
+                    }
+
+                    val updates = mapOf(
+                        "amount" to totalAmount,
+                        "interestRate" to interestRate,
+                        "isReinvest" to isReinvest,
+                        "nextInterestDate" to nextInterestDate,
+                        "orderId" to orderId
+                    )
+                    depositsCollection.document(depositDoc.id).update(updates).await()
+                    Log.d("UserViewModel", "Deposit updated: orderId=$orderId, totalAmount=$totalAmount, newInterestRate=$interestRate")
+                }
+
+                _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
+                _balance.postValue(newBalance)
+                _depositResult.postValue(DepositResult.Success("Deposit created/updated successfully"))
+                Log.d("UserViewModel", "Deposito processed: orderId=$orderId, newBalance=$newBalance")
+            } catch (e: Exception) {
+                _depositResult.postValue(DepositResult.Failure("Deposit processing failed: ${e.message}"))
+                Log.e("UserViewModel", "Deposito error: orderId=$orderId, error=${e.message}", e)
+            }
+        }
+    }
+
+    fun processDepositInterest(depositId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val depositSnapshot = depositsCollection.document(depositId).get().await()
+                val deposit = depositSnapshot.toObject(Deposit::class.java)
+                if (deposit == null || deposit.status != "Active") {
+                    Log.e("UserViewModel", "Invalid or inactive deposit: depositId=$depositId")
+                    return@launch
+                }
+
+                val userSnapshot = usersCollection.whereEqualTo("email", deposit.userEmail).get().await()
+                if (userSnapshot.isEmpty) {
+                    Log.e("UserViewModel", "User not found for deposit: email=${deposit.userEmail}")
+                    return@launch
+                }
+                val userDoc = userSnapshot.documents[0]
+                val user = userDoc.toObject(User::class.java) ?: return@launch
+
+                val monthlyInterest = deposit.amount * (deposit.interestRate / 100) / 12
+                Log.d("UserViewModel", "Processing interest for depositId=$depositId, monthlyInterest=$monthlyInterest, isReinvest=${deposit.isReinvest}")
+
+                if (deposit.isReinvest) {
+                    val newAmount = deposit.amount + monthlyInterest
+                    val newInterestRate = when {
+                        newAmount >= 50_000_000 -> 3.0
+                        newAmount >= 20_000_000 -> 2.5
+                        else -> 2.0
+                    }
+                    depositsCollection.document(depositId).update(
+                        mapOf(
+                            "amount" to newAmount,
+                            "interestRate" to newInterestRate
+                        )
+                    ).await()
+                } else {
+                    val newBalance = user.balance + monthlyInterest
+                    db.runTransaction { transaction ->
+                        transaction.update(userDoc.reference, "balance", newBalance)
+                    }.await()
+                    _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
+                    _balance.postValue(newBalance)
+
+                    val transaksi = Transaksi(
+                        userEmail = deposit.userEmail,
+                        type = "Deposit Interest",
+                        recipient = "System",
+                        amount = monthlyInterest,
+                        timestamp = com.google.firebase.Timestamp.now(),
+                        status = "Completed",
+                        orderId = "${deposit.orderId}_interest_${System.currentTimeMillis()}"
+                    )
+                    logTransaction(transaksi)
+                }
+
+                val calendar = Calendar.getInstance()
+                calendar.time = deposit.nextInterestDate.toDate()
+                calendar.add(Calendar.DAY_OF_MONTH, 30)
+                val newNextInterestDate = com.google.firebase.Timestamp(calendar.time)
+                depositsCollection.document(depositId).update("nextInterestDate", newNextInterestDate).await()
+
+                Log.d("UserViewModel", "Interest processed for depositId=$depositId, nextInterestDate=$newNextInterestDate")
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Error processing interest for depositId=$depositId: ${e.message}", e)
             }
         }
     }
