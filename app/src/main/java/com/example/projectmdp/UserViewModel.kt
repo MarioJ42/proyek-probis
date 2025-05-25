@@ -50,6 +50,7 @@ data class Deposit(
     val orderId: String = ""
 )
 
+
 class UserViewModel : ViewModel() {
     private val db = Firebase.firestore
     private val usersCollection = db.collection("users")
@@ -57,6 +58,7 @@ class UserViewModel : ViewModel() {
     private val transactionsCollection = db.collection("transactions")
     private val qrisPaymentsCollection = db.collection("qris_payments")
     private val depositsCollection = db.collection("deposits")
+    private val bankAccountsCollection = db.collection("bank_accounts")
     private val simulatedOrders = mutableSetOf<String>()
 
     private val _user = MutableLiveData<User?>()
@@ -88,6 +90,9 @@ class UserViewModel : ViewModel() {
 
     private val _depositResult = MutableLiveData<DepositResult>()
     val depositResult: LiveData<DepositResult> get() = _depositResult
+
+    private val _bankAccounts = MutableLiveData<List<BankAccount>>()
+    val bankAccounts: LiveData<List<BankAccount>> get() = _bankAccounts
 
     init {
         createAdminUser()
@@ -834,6 +839,44 @@ class UserViewModel : ViewModel() {
 
     fun clearUpdatePremiumError() {
         _updatePremiumError.postValue(null)
+    }
+
+    fun fetchBankAccounts(userEmail: String) {
+        viewModelScope.launch {
+            try {
+                val normalizedEmail = userEmail.lowercase()
+                val snapshot = bankAccountsCollection.whereEqualTo("userEmail", normalizedEmail).get().await()
+                val accounts = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(BankAccount::class.java)?.copy(id = doc.id)
+                }
+                _bankAccounts.postValue(accounts)
+                Log.d("UserViewModel", "Fetched ${accounts.size} bank accounts for email=$normalizedEmail")
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Fetch bank accounts error for email=$userEmail: ${e.message}", e)
+                _bankAccounts.postValue(emptyList())
+            }
+        }
+    }
+
+    fun saveBankAccount(userEmail: String, bankName: String, accountNumber: String, accountHolderName: String, onResult: (String?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val normalizedEmail = userEmail.lowercase()
+                val bankAccount = BankAccount(
+                    userEmail = normalizedEmail,
+                    bankName = bankName.trim(),
+                    accountNumber = accountNumber.trim(),
+                    accountHolderName = accountHolderName.trim()
+                )
+                val docRef = bankAccountsCollection.add(bankAccount).await()
+                _bankAccounts.value = (_bankAccounts.value ?: emptyList()) + bankAccount.copy(id = docRef.id)
+                Log.d("UserViewModel", "Bank account saved for email=$normalizedEmail, docId=${docRef.id}")
+                onResult(null)
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Save bank account error for email=$userEmail: ${e.message}", e)
+                onResult(e.message)
+            }
+        }
     }
 }
 

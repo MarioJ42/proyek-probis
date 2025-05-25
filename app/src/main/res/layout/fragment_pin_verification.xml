@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#4B0082">
+    android:background="@drawable/gradient_background">
     <TextView
         android:id="@+id/titleTextView"
         android:layout_width="wrap_content"
@@ -106,7 +106,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginTop="48dp"
-        android:background="#D3D3D3">
+        android:background="@drawable/gradient_background">
 
         <Button
             android:id="@+id/key1"

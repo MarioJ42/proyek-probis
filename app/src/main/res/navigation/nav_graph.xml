@@ -314,6 +314,17 @@
             app:destination="@id/investasiTabunganFragment" />
     </fragment>
 
+    <fragment
+        android:id="@+id/bankAccountFragment"
+        android:name="com.example.projectmdp.BankAccountFragment"
+        android:label="Bank Account" />
+
+    <action
+        android:id="@+id/action_transferFragment_to_bankAccountFragment"
+        app:destination="@id/bankAccountFragment"
+        app:popUpTo="@id/transferFragment"
+        app:popUpToInclusive="false" />
+
     <action android:id="@+id/action_global_adminProfileFragment2" app:destination="@id/adminProfileFragment2" />
     <action android:id="@+id/action_global_allUsersFragment2" app:destination="@id/allUsersFragment2" />
     <action android:id="@+id/action_global_premiumUsersFragment2" app:destination="@id/premiumUsersFragment2" />
