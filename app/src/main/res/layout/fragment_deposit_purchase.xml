@@ -5,25 +5,32 @@
     android:layout_height="match_parent"
     android:padding="16dp">
 
+    <TextView
+        android:id="@+id/titleTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pembelian Deposito"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <Button
         android:id="@+id/btnBack"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Kembali"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/titleTextView"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/titleTextView"
-        android:layout_width="0dp"
+        android:id="@+id/labelAmount"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Beli/Menambah Deposito"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:text="Jumlah Deposito (Rp)"
         app:layout_constraintTop_toBottomOf="@id/btnBack"
-        app:layout_constraintWidth_default="spread"
+        app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="16dp" />
 
     <EditText
@@ -31,44 +38,74 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:inputType="numberDecimal"
-        android:hint="Masukkan jumlah (min. Rp5.000.000)"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/labelAmount"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/titleTextView"
-        app:layout_constraintWidth_default="spread"
-        android:layout_marginTop="16dp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp" />
 
     <TextView
-        android:id="@+id/interestRateInfo"
+        android:id="@+id/labelTenor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Jangka Waktu"
+        app:layout_constraintTop_toBottomOf="@id/amountInput"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <Spinner
+        android:id="@+id/tenorSpinner"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Tingkat bunga: 2% (5M+), 2.5% (20M+), 3% (50M+)"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/labelTenor"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/amountInput"
-        app:layout_constraintWidth_default="spread"
+        app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp" />
+
+    <TextView
+        android:id="@+id/labelInterestOption"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pilihan Bunga"
+        app:layout_constraintTop_toBottomOf="@id/tenorSpinner"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp" />
 
     <Spinner
         android:id="@+id/interestOptionSpinner"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:prompt="@string/prompt_interest_option"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/labelInterestOption"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/interestRateInfo"
-        app:layout_constraintWidth_default="spread"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp" />
+
+    <Button
+        android:id="@+id/simulateButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Simulasi"
+        app:layout_constraintTop_toBottomOf="@id/interestOptionSpinner"
+        app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="16dp" />
+
+    <TextView
+        android:id="@+id/resultTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text=""
+        app:layout_constraintTop_toBottomOf="@id/simulateButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"
+        android:gravity="center" />
 
     <Button
         android:id="@+id/confirmButton"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Konfirmasi Pembelian"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:text="Beli Deposito"
+        app:layout_constraintTop_toBottomOf="@id/resultTextView"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/interestOptionSpinner"
-        app:layout_constraintWidth_default="spread"
         android:layout_marginTop="16dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
