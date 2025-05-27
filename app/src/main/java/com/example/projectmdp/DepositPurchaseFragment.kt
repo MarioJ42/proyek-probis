@@ -20,7 +20,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.text.NumberFormat
 import java.util.UUID
+import java.util.Locale
 
 class DepositPurchaseFragment : Fragment() {
     private var _binding: FragmentDepositPurchaseBinding? = null
@@ -53,7 +55,8 @@ class DepositPurchaseFragment : Fragment() {
                 return@showPasswordConfirmationDialog
             }
 
-            setupSpinner()
+            setupTenorSpinner()
+            setupInterestOptionSpinner()
             setupListeners()
         }
 
@@ -63,7 +66,14 @@ class DepositPurchaseFragment : Fragment() {
         }
     }
 
-    private fun setupSpinner() {
+    private fun setupTenorSpinner() {
+        val tenorOptions = arrayOf("1 bulan", "3 bulan", "6 bulan", "12 bulan")
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, tenorOptions)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.tenorSpinner.adapter = adapter
+    }
+
+    private fun setupInterestOptionSpinner() {
         val options = arrayOf("Putar Kembali Bunga", "Cairkan ke Saldo")
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, options)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -71,6 +81,49 @@ class DepositPurchaseFragment : Fragment() {
     }
 
     private fun setupListeners() {
+        binding.simulateButton.setOnClickListener {
+            val amount = binding.amountInput.text.toString().toDoubleOrNull() ?: 0.0
+            if (amount < 5_000_000) {
+                Toast.makeText(context, "Jumlah minimum Rp5.000.000", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val tenor = when (binding.tenorSpinner.selectedItem.toString()) {
+                "1 bulan" -> 1
+                "3 bulan" -> 3
+                "6 bulan" -> 6
+                "12 bulan" -> 12
+                else -> 6
+            }
+            val interestRate = when {
+                amount >= 50_000_000 -> 3.0
+                amount >= 20_000_000 -> 2.5
+                else -> 2.0
+            }
+            val isReinvest = binding.interestOptionSpinner.selectedItem.toString() == "Putar Kembali Bunga"
+
+            val monthlyRate = interestRate / 100 / 12
+            var totalInterest = 0.0
+            var finalAmount = amount
+
+            if (isReinvest) {
+                var currentPrincipal = amount
+                for (month in 1..tenor) {
+                    val monthlyInterest = currentPrincipal * monthlyRate
+                    totalInterest += monthlyInterest
+                    currentPrincipal += monthlyInterest
+                }
+                finalAmount = currentPrincipal
+            } else {
+                val monthlyInterest = amount * monthlyRate
+                totalInterest = monthlyInterest * tenor
+                finalAmount = amount + totalInterest
+            }
+
+            val formatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+            binding.resultTextView.text = "Suku Bunga: ${interestRate}%\nBunga: ${formatter.format(totalInterest)}\nTotal: ${formatter.format(finalAmount)}"
+        }
+
         binding.confirmButton.setOnClickListener {
             val amount = binding.amountInput.text.toString().toDoubleOrNull() ?: 0.0
             if (amount < 5_000_000) {
@@ -78,29 +131,54 @@ class DepositPurchaseFragment : Fragment() {
                 return@setOnClickListener
             }
 
+            val tenor = when (binding.tenorSpinner.selectedItem.toString()) {
+                "1 bulan" -> 1
+                "3 bulan" -> 3
+                "6 bulan" -> 6
+                "12 bulan" -> 12
+                else -> 6
+            }
+            val interestOption = binding.interestOptionSpinner.selectedItem.toString()
+            val isReinvest = interestOption == "Putar Kembali Bunga"
+            val orderId = UUID.randomUUID().toString()
+
             showPasswordConfirmationDialog { isVerified ->
                 if (!isVerified) {
                     Toast.makeText(context, "Kata sandi salah, pembelian dibatalkan", Toast.LENGTH_LONG).show()
                     return@showPasswordConfirmationDialog
                 }
 
-                val interestOption = binding.interestOptionSpinner.selectedItem.toString()
-                val isReinvest = interestOption == "Putar Kembali Bunga"
-                val orderId = UUID.randomUUID().toString()
-                viewModel.createOrUpdateDeposit(userEmail, amount, 12, isReinvest, orderId)
-            }
-        }
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val userSnapshot = Firebase.firestore.collection("users")
+                            .whereEqualTo("email", userEmail.lowercase())
+                            .get()
+                            .await()
+                        if (userSnapshot.isEmpty) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(context, "Pengguna tidak ditemukan", Toast.LENGTH_LONG).show()
+                            }
+                            return@launch
+                        }
+                        val user = userSnapshot.documents[0].toObject(User::class.java)
+                        if (user?.balance ?: 0.0 < amount) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(context, "Saldo tidak cukup", Toast.LENGTH_LONG).show()
+                            }
+                            return@launch
+                        }
+                        viewModel.createOrUpdateDeposit(userEmail, amount, tenor, isReinvest, orderId)
 
-        // Update deposit result observer
-        viewModel.depositResult.observe(viewLifecycleOwner) { result ->
-            when (result) {
-                is DepositResult.Success -> {
-                    Toast.makeText(context, "Deposito berhasil ditambahkan", Toast.LENGTH_SHORT).show()
-                    val bundle = Bundle().apply { putString("userEmail", userEmail) }
-                    findNavController().navigate(R.id.action_depositPurchaseFragment_to_investasiTabunganFragment, bundle)
-                }
-                is DepositResult.Failure -> {
-                    Toast.makeText(context, "Gagal: ${result.message}", Toast.LENGTH_LONG).show()
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "Pembelian deposito berhasil", Toast.LENGTH_SHORT).show()
+                            val bundle = Bundle().apply { putString("userEmail", userEmail) }
+                            findNavController().navigate(R.id.action_depositPurchaseFragment_to_investasiTabunganFragment, bundle)
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "Gagal memproses: ${e.message}", Toast.LENGTH_LONG).show()
+                        }
+                    }
                 }
             }
         }

@@ -5,35 +5,32 @@
     android:layout_height="match_parent"
     android:padding="16dp">
 
+    <TextView
+        android:id="@+id/titleTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Investasi &amp; Tabungan"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <Button
         android:id="@+id/btnBack"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Kembali"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/titleTextView"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/titleTextView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Investasi Deposito"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnBack"
-        app:layout_constraintWidth_default="spread"
-        android:layout_marginTop="16dp" />
-
-    <TextView
-        android:id="@+id/balanceLabel"
+        android:id="@+id/labelBalance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Saldo Deposito:"
-        android:textSize="18sp"
+        app:layout_constraintTop_toBottomOf="@id/btnBack"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/titleTextView"
         android:layout_marginTop="16dp" />
 
     <TextView
@@ -41,19 +38,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Rp0"
-        android:textSize="18sp"
+        app:layout_constraintTop_toBottomOf="@id/labelBalance"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/balanceLabel"
         android:layout_marginTop="8dp" />
 
     <TextView
-        android:id="@+id/interestRateLabel"
+        android:id="@+id/labelInterestRate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Tingkat Bunga:"
-        android:textSize="18sp"
-        app:layout_constraintStart_toStartOf="parent"
+        android:text="Suku Bunga:"
         app:layout_constraintTop_toBottomOf="@id/balanceTextView"
+        app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="16dp" />
 
     <TextView
@@ -61,19 +56,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="0%"
-        android:textSize="18sp"
+        app:layout_constraintTop_toBottomOf="@id/labelInterestRate"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/interestRateLabel"
         android:layout_marginTop="8dp" />
 
     <TextView
-        android:id="@+id/nextInterestDateLabel"
+        android:id="@+id/labelNextInterestDate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Jatuh Tempo Bunga Berikutnya:"
-        android:textSize="18sp"
-        app:layout_constraintStart_toStartOf="parent"
+        android:text="Tanggal Bunga Berikutnya:"
         app:layout_constraintTop_toBottomOf="@id/interestRateTextView"
+        app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="16dp" />
 
     <TextView
@@ -81,20 +74,26 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Belum ada deposito"
-        android:textSize="18sp"
+        app:layout_constraintTop_toBottomOf="@id/labelNextInterestDate"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/nextInterestDateLabel"
         android:layout_marginTop="8dp" />
 
     <Button
         android:id="@+id/buyDepositButton"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Beli/Menambah Deposito"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:text="Beli Deposito"
         app:layout_constraintTop_toBottomOf="@id/nextInterestDateTextView"
-        app:layout_constraintWidth_default="spread"
-        android:layout_marginTop="24dp" />
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/withdrawButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tarik Saldo"
+        app:layout_constraintTop_toBottomOf="@id/buyDepositButton"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
