@@ -6,13 +6,14 @@ import com.google.firebase.database.FirebaseDatabase
 
 class MyApplication : Application() {
     companion object{
-//        lateinit var db: AppDatabase
+        lateinit var db: AppDatabase
     }
     override fun onCreate() {
         super.onCreate()
+        db = AppDatabase.getInstance(baseContext)
         FirebaseApp.initializeApp(this)
         // Enable persistence for offline support (optional)
         FirebaseDatabase.getInstance().setPersistenceEnabled(true)
-//        db = AppDatabase.invoke(baseContext)
+
     }
 }
