@@ -2,6 +2,7 @@ package com.example.projectmdp
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,14 +10,18 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.fragment.findNavController
 import com.example.projectmdp.databinding.FragmentLoginBinding
+import kotlinx.coroutines.launch
 
 class LoginFragment : Fragment() {
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
     private val viewModel: UserViewModel by viewModels { UserViewModelFactory() }
-
+    private lateinit var db: AppDatabase
+    private lateinit var dao: RememberedUserDAO
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -27,6 +32,38 @@ class LoginFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        db = AppDatabase.getInstance(requireContext())
+        dao = db.RememberedUserDAO()
+        viewModel.getRememberMe { rememberedUser ->
+            rememberedUser?.let {
+                binding.inputEmail.setText(it.email)
+                binding.inputPassword.setText(it.password)
+                binding.checkboxRemember.isChecked = true
+            }
+        }
+//        lifecycleScope.launch {
+//            val rememberedUser = dao.getUser(0)
+//            rememberedUser?.let {
+//                binding.inputEmail.setText(it.email)
+//                binding.inputPassword.setText(it.password)
+//                binding.checkboxRemember.isChecked = true
+//            }
+//        }
+//        binding.checkboxRemember.setOnCheckedChangeListener { _, isChecked ->
+//            val email = binding.inputEmail.text.toString().trim()
+//            val password = binding.inputPassword.text.toString().trim()
+//
+//            if (isChecked) {
+//                if (email.isNotEmpty() && password.isNotEmpty()) {
+//                    viewModel.saverememberme(RememberUser(email = email, password = password))
+//                } else {
+//                    Toast.makeText(requireContext(), "Fill email & password before checking Remember Me", Toast.LENGTH_SHORT).show()
+//                    binding.checkboxRemember.isChecked = false
+//                }
+//            } else {
+//                viewModel.clearRememberMe()
+//            }
+//        }
 
         binding.button.setOnClickListener {
             val email = binding.inputEmail.text.toString().trim()
@@ -36,7 +73,6 @@ class LoginFragment : Fragment() {
                 Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-
             viewModel.login(email, password)
         }
 
@@ -50,6 +86,14 @@ class LoginFragment : Fragment() {
             when (result) {
                 true -> {
                     val email = binding.inputEmail.text.toString().trim()
+                    val password = binding.inputPassword.text.toString().trim()
+                    val rememberMeChecked = binding.checkboxRemember.isChecked
+                    if (rememberMeChecked) {
+                        viewModel.saverememberme(RememberUser(email = email, password = password))
+                    } else {
+                        viewModel.clearRememberMe()
+                    }
+
                     viewModel.user.observe(viewLifecycleOwner) { user ->
                         if (user != null && findNavController().currentDestination?.id == R.id.loginFragment) {
                             if (user.status == "inactive") {
@@ -66,7 +110,6 @@ class LoginFragment : Fragment() {
                                 if (user.role == 1) {
                                     val intent = Intent(requireContext(), AdminActivity::class.java)
                                     intent.putExtra("userEmail", email)
-//                                    intent.putExtra("userFullname", )
                                     startActivity(intent)
                                     requireActivity().finish()
                                 } else {
