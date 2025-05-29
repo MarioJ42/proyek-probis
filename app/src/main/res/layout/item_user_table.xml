@@ -1,91 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rowContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingVertical="4dp"
+    android:paddingVertical="8dp"
     android:paddingHorizontal="6dp"
-    android:background="@android:color/white"
     android:layout_marginBottom="1dp">
 
-    <!-- Name -->
     <TextView
         android:id="@+id/nameText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Name"
-        android:textColor="@android:color/black"
+        tools:text="jiko"
+        android:textColor="@color/text_primary"
         android:textSize="12sp"
-        android:maxLines="1"
+        android:maxLines="2"
         android:ellipsize="end"
-        android:padding="4dp"
-        app:layout_constraintStart_toStartOf="parent"
+        android:gravity="start|center_vertical" app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintWidth_percent="0.2" />
-
-    <!-- Email -->
-    <TextView
-        android:id="@+id/emailText"
-        android:layout_width="114dp"
-        android:layout_height="31dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:padding="4dp"
-        android:text="Email"
-        android:textColor="@android:color/black"
-        android:textSize="12sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/nameText"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="0.3" />
-
-    <!-- Balance -->
-    <TextView
-        android:id="@+id/balanceText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Balance"
-        android:textColor="@android:color/black"
-        android:textSize="12sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:padding="4dp"
-        app:layout_constraintStart_toEndOf="@id/emailText"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintWidth_percent="0.25" />
-
-    <!-- Status -->
-    <TextView
-        android:id="@+id/statusText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Status"
-        android:textColor="@android:color/black"
-        android:textSize="12sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:padding="4dp"
-        app:layout_constraintStart_toEndOf="@id/balanceText"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintWidth_percent="0.15" />
-
-    <!-- Action Button -->
-    <Button
-        android:id="@+id/actionButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text=">"
-        android:textSize="10sp"
-        android:padding="2dp"
-        android:backgroundTint="#6200EA"
-        android:textColor="@android:color/white"
-        app:layout_constraintStart_toEndOf="@id/statusText"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintWidth_percent="0.1" />
+        app:layout_constraintWidth_percent="0.20" /> <TextView
+    android:id="@+id/emailText"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    tools:text="jiko@gmail.com"
+    android:ellipsize="end"
+    android:maxLines="2"
+    android:textColor="@color/text_primary"
+    android:textSize="12sp"
+    android:gravity="start|center_vertical" app:layout_constraintStart_toEndOf="@id/nameText"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintWidth_percent="0.30" /> <TextView
+    android:id="@+id/balanceText"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    tools:text="Rp 2,548,547.00"
+    android:textColor="@color/text_primary"
+    android:textSize="12sp"
+    android:maxLines="2"
+    android:ellipsize="end"
+    android:gravity="end|center_vertical" app:layout_constraintStart_toEndOf="@id/emailText"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintWidth_percent="0.20" /> <TextView
+    android:id="@+id/statusText"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    tools:text="active"
+    android:textColor="@color/text_primary"
+    android:textSize="12sp"
+    android:maxLines="1"
+    android:ellipsize="end"
+    android:gravity="center" app:layout_constraintStart_toEndOf="@id/balanceText"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintWidth_percent="0.15" /> <com.google.android.material.button.MaterialButton
+    android:id="@+id/actionButton"
+    android:layout_width="0dp"
+    android:layout_height="32dp" tools:text="Deactivate"
+    android:textSize="10sp"
+    android:minWidth="0dp"
+    android:minHeight="0dp"
+    android:insetTop="0dp"
+    android:insetBottom="0dp"
+    android:paddingHorizontal="4dp" android:paddingVertical="2dp"
+    app:cornerRadius="8dp"
+    app:backgroundTint="@color/action_button_deactivate"
+    android:textColor="@android:color/white"
+    app:layout_constraintStart_toEndOf="@id/statusText"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintWidth_percent="0.15" app:layout_constraintVertical_bias="0.5" />
 </androidx.constraintlayout.widget.ConstraintLayout>

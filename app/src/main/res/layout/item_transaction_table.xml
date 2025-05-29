@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rowContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingVertical="8dp"
+    android:paddingHorizontal="6dp"
+    android:layout_marginBottom="1dp">
+
+    <TextView
+        android:id="@+id/typeText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        tools:text="Bank Transfer"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:gravity="start|center_vertical"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintWidth_percent="0.20" />
+
+    <TextView
+        android:id="@+id/recipientText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        tools:text="23423423\n42342342"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:maxLines="3"
+        android:ellipsize="end"
+        android:gravity="start|center_vertical"
+        app:layout_constraintStart_toEndOf="@id/typeText"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintWidth_percent="0.30" />
+
+    <TextView
+        android:id="@+id/amountText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        tools:text="Rp 1,231,231.00"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:gravity="end|center_vertical"
+        app:layout_constraintStart_toEndOf="@id/recipientText"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintWidth_percent="0.20" />
+
+    <TextView
+        android:id="@+id/dateText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        tools:text="26/05\n/2025\n01:10"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:maxLines="3"
+        android:ellipsize="end"
+        android:gravity="center"
+        app:layout_constraintStart_toEndOf="@id/amountText"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintWidth_percent="0.15" />
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        tools:text="Completed"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:gravity="center"
+        app:layout_constraintStart_toEndOf="@id/dateText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintWidth_percent="0.15" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

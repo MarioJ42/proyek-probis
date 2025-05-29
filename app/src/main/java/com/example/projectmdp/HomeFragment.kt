@@ -17,6 +17,8 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: UserViewModel by viewModels { UserViewModelFactory() }
 
+    private var isBalanceHidden: Boolean = false
+    private var currentBalanceValue: Double = 0.0
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -35,14 +37,12 @@ class HomeFragment : Fragment() {
             return
         }
 
-        // Panggil fetchUser hanya jika email berubah
         if (viewModel.userEmail.value != userEmail.lowercase()) {
             viewModel.fetchUser(userEmail)
         }
 
         viewModel.user.observe(viewLifecycleOwner) { user ->
             if (user != null) {
-                // Check role for admin greeting
                 val greeting = if (user.role == 1) {
                     "Hello Admin, ${user.fullName}!"
                 } else {
@@ -54,13 +54,15 @@ class HomeFragment : Fragment() {
             }
         }
 
-        // Satu observer untuk balance
         viewModel.balance.observe(viewLifecycleOwner) { balance ->
-            val formattedBalance = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
-                .format(balance)
-                .replace("IDR", "Rp ")
-            binding.balanceTextView.text = formattedBalance
-            Log.d("HomeFragment", "Balance updated: $balance, formatted: $formattedBalance")
+            currentBalanceValue = balance
+            updateBalanceDisplay()
+            Log.d("HomeFragment", "Balance updated: $balance")
+        }
+
+        binding.balanceVisibilityToggle.setOnClickListener {
+            isBalanceHidden = !isBalanceHidden
+            updateBalanceDisplay()
         }
 
         binding.topUp.setOnClickListener {
@@ -102,6 +104,19 @@ class HomeFragment : Fragment() {
             }
             findNavController().popBackStack(R.id.loginFragment, true)
             findNavController().navigate(R.id.loginFragment)
+        }
+    }
+
+    private fun updateBalanceDisplay() {
+        if (isBalanceHidden) {
+            binding.balanceTextView.text = "Rp *********"
+            binding.balanceVisibilityToggle.setImageResource(R.drawable.ic_visibility_off)
+        } else {
+            val formattedBalance = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+                .format(currentBalanceValue)
+                .replace("IDR", "Rp ")
+            binding.balanceTextView.text = formattedBalance
+            binding.balanceVisibilityToggle.setImageResource(R.drawable.ic_visibility)
         }
     }
 

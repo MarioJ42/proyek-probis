@@ -5,7 +5,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -32,7 +31,6 @@ class TransferFragment : Fragment() {
         val userEmail = arguments?.getString("userEmail") ?: ""
         Log.d("TransferFragment", "User email: $userEmail")
 
-        // Fetch user and bank accounts
         viewModel.fetchUser(userEmail)
         viewModel.fetchBankAccounts(userEmail)
 
@@ -51,109 +49,103 @@ class TransferFragment : Fragment() {
     }
 
     private fun setupTransferOptions(isPremium: Boolean, userEmail: String) {
+        val transferTypes = arrayOf("To User", "Bank Transfer")
+        val transferTypeAdapter = ArrayAdapter(requireContext(), R.layout.dropdown_menu_item, transferTypes)
+        binding.transferTypeAutoCompleteTextView.setAdapter(transferTypeAdapter)
+
         if (isPremium) {
-            binding.transferTypeSpinner.visibility = View.VISIBLE
-            val options = arrayOf("To User", "Bank Transfer")
-            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, options)
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            binding.transferTypeSpinner.adapter = adapter
+            binding.transferTypeDropdown.visibility = View.VISIBLE
 
-            binding.transferTypeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    when (options[position]) {
-                        "To User" -> {
-                            binding.toUserForm.visibility = View.VISIBLE
-                            binding.bankTransferForm.visibility = View.GONE
-                            Log.d("TransferFragment", "Selected: To User")
-                        }
-                        "Bank Transfer" -> {
-                            binding.toUserForm.visibility = View.GONE
-                            binding.bankTransferForm.visibility = View.VISIBLE
-                            Log.d("TransferFragment", "Selected: Bank Transfer")
+            binding.transferTypeAutoCompleteTextView.setOnItemClickListener { parent, view, position, id ->
+                when (transferTypes[position]) {
+                    "To User" -> {
+                        binding.toUserFormCard.visibility = View.VISIBLE
+                        binding.bankTransferFormCard.visibility = View.GONE
+                        Log.d("TransferFragment", "Selected: To User")
+                    }
+                    "Bank Transfer" -> {
+                        binding.toUserFormCard.visibility = View.GONE
+                        binding.bankTransferFormCard.visibility = View.VISIBLE
+                        Log.d("TransferFragment", "Selected: Bank Transfer")
 
-                            // Always show Add Bank Account button and transfer form
-                            binding.addBankAccountButton.visibility = View.VISIBLE
-                            binding.bankAccountSpinner.visibility = View.VISIBLE
-                            binding.tilBankAmount.visibility = View.VISIBLE
-                            binding.bankTransferButton.visibility = View.VISIBLE
+                        binding.addBankAccountButton.visibility = View.VISIBLE
+                        binding.bankAccountDropdown.visibility = View.VISIBLE
+                        binding.tilBankAmount.visibility = View.VISIBLE
+                        binding.bankTransferButton.visibility = View.VISIBLE
 
-                            // Observe bank accounts to populate the spinner
-                            viewModel.bankAccounts.observe(viewLifecycleOwner) { bankAccounts ->
-                                Log.d("TransferFragment", "Bank accounts observed: count=${bankAccounts.size}")
-                                if (bankAccounts.isNotEmpty()) {
-                                    // Populate spinner with bank accounts
-                                    val accountOptions = bankAccounts.map { "${it.bankName} - ${it.accountNumber} (${it.accountHolderName})" }
-                                    val spinnerAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, accountOptions)
-                                    spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                                    binding.bankAccountSpinner.adapter = spinnerAdapter
-                                    Log.d("TransferFragment", "Showing bank account spinner with ${accountOptions.size} options")
-                                } else {
-                                    // Clear spinner if no accounts
-                                    binding.bankAccountSpinner.adapter = null
-                                    Log.d("TransferFragment", "No bank accounts, spinner cleared")
-                                }
+                        viewModel.bankAccounts.observe(viewLifecycleOwner) { bankAccounts ->
+                            Log.d("TransferFragment", "Bank accounts observed: count=${bankAccounts.size}")
+                            if (bankAccounts.isNotEmpty()) {
+                                val accountOptions = bankAccounts.map { "${it.bankName} - ${it.accountNumber} (${it.accountHolderName})" }
+                                val spinnerAdapter = ArrayAdapter(requireContext(), R.layout.dropdown_menu_item, accountOptions)
+                                binding.bankAccountAutoCompleteTextView.setAdapter(spinnerAdapter)
+                                Log.d("TransferFragment", "Showing bank account dropdown with ${accountOptions.size} options")
+                            } else {
+                                binding.bankAccountAutoCompleteTextView.setAdapter(null)
+                                binding.bankAccountAutoCompleteTextView.setText("", false)
+                                Log.d("TransferFragment", "No bank accounts, dropdown cleared")
                             }
                         }
-                        else -> {
-                            binding.toUserForm.visibility = View.VISIBLE
-                            binding.bankTransferForm.visibility = View.GONE
-                            Log.d("TransferFragment", "Default: To User")
-                        }
                     }
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>?) {
-                    binding.toUserForm.visibility = View.VISIBLE
-                    binding.bankTransferForm.visibility = View.GONE
-                    Log.d("TransferFragment", "Nothing selected, defaulting to To User")
+                    else -> {
+                        binding.toUserFormCard.visibility = View.VISIBLE
+                        binding.bankTransferFormCard.visibility = View.GONE
+                        Log.d("TransferFragment", "Default: To User (unexpected selection)")
+                    }
                 }
             }
 
-            // Default to To User
-            binding.transferTypeSpinner.setSelection(0)
+            binding.transferTypeAutoCompleteTextView.setText(transferTypes[0], false)
+            binding.toUserFormCard.visibility = View.VISIBLE
+            binding.bankTransferFormCard.visibility = View.GONE
 
-            // Add Bank Account Button
-            binding.addBankAccountButton.setOnClickListener {
-                Log.d("TransferFragment", "Add Bank Account button clicked")
-                val bundle = Bundle().apply {
-                    putString("userEmail", userEmail)
-                }
-                findNavController().navigate(R.id.action_transferFragment_to_bankAccountFragment, bundle)
-            }
-
-            // Bank Transfer Button
-            binding.bankTransferButton.setOnClickListener {
-                val selectedPosition = binding.bankAccountSpinner.selectedItemPosition
-                val bankAccounts = viewModel.bankAccounts.value ?: emptyList()
-                if (bankAccounts.isEmpty()) {
-                    Toast.makeText(context, "Please add a bank account first", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-                if (selectedPosition >= 0 && selectedPosition < bankAccounts.size) {
-                    val selectedAccount = bankAccounts[selectedPosition]
-                    val amount = binding.bankAmount.text.toString().toDoubleOrNull() ?: 0.0
-                    if (amount <= 0) {
-                        Toast.makeText(context, "Please fill the amount", Toast.LENGTH_SHORT).show()
-                        return@setOnClickListener
-                    }
-
-                    val bundle = Bundle().apply {
-                        putString("userEmail", userEmail)
-                        putString("bankAccount", selectedAccount.accountNumber)
-                        putFloat("amount", amount.toFloat())
-                        putString("transferType", "bankTransfer")
-                    }
-                    findNavController().navigate(R.id.action_transferFragment_to_pinVerificationFragment, bundle)
-                    Log.d("TransferFragment", "Bank Transfer initiated with account: ${selectedAccount.accountNumber}")
-                } else {
-                    Toast.makeText(context, "Please select a bank account", Toast.LENGTH_SHORT).show()
-                }
-            }
         } else {
-            binding.transferTypeSpinner.visibility = View.GONE
-            binding.toUserForm.visibility = View.VISIBLE
-            binding.bankTransferForm.visibility = View.GONE
+            binding.transferTypeDropdown.visibility = View.GONE
+            binding.toUserFormCard.visibility = View.VISIBLE
+            binding.bankTransferFormCard.visibility = View.GONE
             Log.d("TransferFragment", "Non-premium user, showing To User form only")
+        }
+
+        binding.addBankAccountButton.setOnClickListener {
+            Log.d("TransferFragment", "Add Bank Account button clicked")
+            val bundle = Bundle().apply {
+                putString("userEmail", userEmail)
+            }
+            findNavController().navigate(R.id.action_transferFragment_to_bankAccountFragment, bundle)
+        }
+
+        binding.bankTransferButton.setOnClickListener {
+            val bankAccounts = viewModel.bankAccounts.value ?: emptyList()
+            val selectedAccountText = binding.bankAccountAutoCompleteTextView.text.toString()
+
+            if (bankAccounts.isEmpty() || selectedAccountText.isEmpty()) {
+                Toast.makeText(context, "Please select a bank account first", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val selectedAccount = bankAccounts.find {
+                "${it.bankName} - ${it.accountNumber} (${it.accountHolderName})" == selectedAccountText
+            }
+
+            if (selectedAccount == null) {
+                Toast.makeText(context, "Invalid bank account selected", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val amount = binding.bankAmount.text.toString().toDoubleOrNull() ?: 0.0
+            if (amount <= 0) {
+                Toast.makeText(context, "Please fill the amount", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val bundle = Bundle().apply {
+                putString("userEmail", userEmail)
+                putString("bankAccount", selectedAccount.accountNumber)
+                putFloat("amount", amount.toFloat())
+                putString("transferType", "bankTransfer")
+            }
+            findNavController().navigate(R.id.action_transferFragment_to_pinVerificationFragment, bundle)
+            Log.d("TransferFragment", "Bank Transfer initiated with account: ${selectedAccount.accountNumber}")
         }
 
         binding.transferButton.setOnClickListener {
