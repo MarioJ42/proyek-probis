@@ -1,90 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="@drawable/gradient_background"
-    android:padding="16dp">
+    android:padding="24dp"> <androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/headerContainer"
+    android:layout_width="0dp"
+    android:layout_height="?attr/actionBarSize"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent">
 
-    <!-- Toolbar for back arrow and title -->
-<androidx.appcompat.widget.Toolbar
-android:id="@+id/toolbar"
-android:layout_width="match_parent"
-android:layout_height="?attr/actionBarSize"
-    android:background="@drawable/gradient_background"
-android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
-
-<ImageButton
-    android:id="@+id/btnBack"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:src="@android:drawable/ic_menu_revert"
-    android:contentDescription="Back"
-    android:background="?attr/selectableItemBackgroundBorderless"
-    android:tint="#FFFFFF" />
-
-<TextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Premium"
-    android:textSize="20sp"
-    android:textStyle="bold"
-    android:layout_gravity="center"
-    android:textColor="#FFFFFF" />
-</androidx.appcompat.widget.Toolbar>
-
-    <!-- Instruction Text -->
-    <TextView
-        android:id="@+id/radius"
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnBack"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        android:background="#FFFFFF"
-        android:gravity="center"
-        android:padding="8dp"
-        android:text="To get premium status, please upload your KTP photo and pay Rp 500,000 from your balance."
-        android:textSize="16sp" />
+        android:text="Back"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        app:icon="@drawable/ic_arrow_back" app:iconTint="@color/white"
+        app:iconGravity="textStart"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-    <!-- KTP Image -->
-<ImageView
-android:id="@+id/ktpImageView"
-android:layout_width="200dp"
-android:layout_height="200dp"
-android:layout_gravity="center"
-android:contentDescription="KTP Photo"
-android:src="@drawable/ic_person"
-android:background="#FFFFFF"
-android:padding="16dp"/>
+    <TextView
+        android:id="@+id/premiumTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Premium"
+        android:textColor="#FFFFFF"
+        android:textSize="28sp"
+        android:fontFamily="sans-serif-bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Upload KTP Button -->
-<Button
-android:id="@+id/btnUploadKtp"
-android:layout_width="wrap_content"
-android:layout_height="wrap_content"
-android:text="Upload KTP Photo"
-android:layout_gravity="center"
-android:backgroundTint="#c4c2c2"
-android:textColor="#000000"
-android:layout_marginTop="24dp"/>
+    <androidx.cardview.widget.CardView
+        android:id="@+id/premiumContentCard"
+        android:layout_width="0dp"
+        android:layout_height="0dp" android:layout_marginTop="32dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp"
+        app:layout_constraintTop_toBottomOf="@id/headerContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-    <!-- Submit Premium Request Button -->
-<Button
-android:id="@+id/btnSubmitPremium"
-android:layout_width="wrap_content"
-android:layout_height="wrap_content"
-android:text="Submit Premium Request"
-android:layout_gravity="center"
-android:backgroundTint="#c4c2c2"
-android:textColor="#000000"
-android:layout_marginTop="16dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:background="@color/card_background"
+            android:padding="24dp"> <TextView
+            android:id="@+id/instructionText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="To get premium status, please upload your KTP photo and pay Rp 500,000 from your balance."
+            android:textSize="16sp"
+            android:textColor="@color/text_primary"
+            android:fontFamily="sans-serif-medium"
+            android:layout_marginBottom="24dp" />
 
-    <!-- Loading Progress Bar -->
-<ProgressBar
-android:id="@+id/loadingProgressBar"
-android:layout_width="wrap_content"
-android:layout_height="wrap_content"
-android:visibility="gone"
-android:layout_gravity="center"/>
-    </LinearLayout>
+            <ImageView
+                android:id="@+id/ktpImageView"
+                android:layout_width="160dp"
+                android:layout_height="160dp"
+                android:layout_gravity="center_horizontal"
+                android:contentDescription="KTP Photo"
+                android:src="@drawable/ic_ktp_placeholder" android:background="@drawable/image_border" android:scaleType="centerCrop"
+                android:layout_marginBottom="24dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnUploadKtp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Upload KTP Photo"
+                android:textColor="@color/button_background" android:textSize="16sp"
+                app:backgroundTint="@android:color/transparent" app:strokeColor="@color/button_background" app:strokeWidth="1dp"
+                app:cornerRadius="12dp"
+                android:paddingVertical="12dp"
+                android:layout_marginBottom="12dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSubmitPremium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Submit Premium Request"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                app:backgroundTint="@color/status_active" app:cornerRadius="12dp"
+                android:paddingVertical="12dp"
+                android:layout_marginBottom="24dp"/>
+
+            <ProgressBar
+                android:id="@+id/loadingProgressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_gravity="center_horizontal"
+                android:indeterminateTint="@color/button_background" />
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

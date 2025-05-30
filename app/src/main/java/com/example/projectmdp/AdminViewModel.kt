@@ -33,6 +33,9 @@ class AdminViewModel : ViewModel() {
     private val _premiumRequests = MutableLiveData<List<PremiumRequest>>()
     val premiumRequests: LiveData<List<PremiumRequest>> get() = _premiumRequests
 
+    private val _updatePremiumError = MutableLiveData<String?>()
+    val updatePremiumError: LiveData<String?> get() = _updatePremiumError
+
     private val _userCache = mutableMapOf<String, User?>()
 
     fun fetchAllUsersExceptAdmin(adminEmail: String) {
@@ -48,6 +51,7 @@ class AdminViewModel : ViewModel() {
             } catch (e: Exception) {
                 Log.e("AdminViewModel", "Error fetching users: ${e.message}")
                 _users.postValue(emptyList())
+                _updatePremiumError.postValue("Failed to fetch users: ${e.message}") // Post error
             }
         }
     }
@@ -65,6 +69,7 @@ class AdminViewModel : ViewModel() {
             } catch (e: Exception) {
                 Log.e("AdminViewModel", "Error fetching premium users: ${e.message}")
                 _premiumUsers.postValue(emptyList())
+                _updatePremiumError.postValue("Failed to fetch premium users: ${e.message}") // Post error
             }
         }
     }
@@ -81,6 +86,7 @@ class AdminViewModel : ViewModel() {
             } catch (e: Exception) {
                 Log.e("AdminViewModel", "Error fetching premium requests: ${e.message}")
                 _premiumRequests.postValue(emptyList())
+                _updatePremiumError.postValue("Failed to fetch premium requests: ${e.message}") // Post error
             }
         }
     }
@@ -103,9 +109,11 @@ class AdminViewModel : ViewModel() {
                     }
                     Log.d("AdminViewModel", "Accepted premium request for ${request.userEmail}")
                     fetchPremiumRequestsExceptAdmin(adminEmail)
+                    _updatePremiumError.postValue(null) // Clear error on success
                 }
             } catch (e: Exception) {
-                Log.e("AdminViewModel", "Error accepting premium request: ${e.message}")
+                Log.e("AdminViewModel", "Error accepting premium request: ${e.message}", e)
+                _updatePremiumError.postValue("Failed to accept request: ${e.message}") // Post error
             }
         }
     }
@@ -116,8 +124,10 @@ class AdminViewModel : ViewModel() {
                 premiumCollection.document(requestId).update("requestPremium", false).await()
                 Log.d("AdminViewModel", "Rejected premium request for document $requestId")
                 fetchPremiumRequestsExceptAdmin(adminEmail)
+                _updatePremiumError.postValue(null) // Clear error on success
             } catch (e: Exception) {
-                Log.e("AdminViewModel", "Error rejecting premium request: ${e.message}")
+                Log.e("AdminViewModel", "Error rejecting premium request: ${e.message}", e)
+                _updatePremiumError.postValue("Failed to reject request: ${e.message}") // Post error
             }
         }
     }
@@ -129,10 +139,17 @@ class AdminViewModel : ViewModel() {
                 Log.d("AdminViewModel", "Updated user $userId status to $newStatus")
                 fetchAllUsersExceptAdmin(adminEmail)
                 fetchPremiumUsersExceptAdmin(adminEmail)
+                _updatePremiumError.postValue(null) // Clear error on success
             } catch (e: Exception) {
-                Log.e("AdminViewModel", "Error updating user status: ${e.message}")
+                Log.e("AdminViewModel", "Error updating user status: ${e.message}", e)
+                _updatePremiumError.postValue("Failed to update user status: ${e.message}") // Post error
             }
         }
+    }
+
+
+    fun clearUpdatePremiumError() {
+        _updatePremiumError.postValue(null)
     }
 
     fun getUserByEmail(email: String): User? {

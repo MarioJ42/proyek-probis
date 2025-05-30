@@ -5,31 +5,25 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.TableLayout
-import android.widget.TableRow
-import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.bumptech.glide.Glide
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.projectmdp.databinding.FragmentRequestPremiumBinding
-import kotlinx.coroutines.launch
-
 class RequestPremiumFragment : Fragment() {
     private var _binding: FragmentRequestPremiumBinding? = null
     private val binding get() = _binding!!
     private val viewModel: AdminViewModel by viewModels { AdminViewModelFactory() }
     private var adminEmail: String = ""
 
+    private lateinit var premiumRequestAdapter: PremiumRequestAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         adminEmail = arguments?.getString("userEmail") ?: ""
         if (adminEmail.isEmpty()) {
-            Log.e("RequestPremiumFragment", "Admin email not provided")
+            Log.e("RequestPremiumFragment", "Admin email not provided, navigating up")
             Toast.makeText(context, "Admin email not found", Toast.LENGTH_SHORT).show()
             findNavController().navigateUp()
         }
@@ -47,89 +41,56 @@ class RequestPremiumFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setupRecyclerView()
+
         binding.progressBar.visibility = View.VISIBLE
-        viewModel.fetchAllUsersExceptAdmin(adminEmail) // Pre-fetch users for caching
+
+        viewModel.fetchAllUsersExceptAdmin(adminEmail)
         viewModel.fetchPremiumRequestsExceptAdmin(adminEmail)
 
         viewModel.premiumRequests.observe(viewLifecycleOwner) { requests ->
             binding.progressBar.visibility = View.GONE
             if (requests != null) {
                 Log.d("RequestPremiumFragment", "Fetched ${requests.size} premium requests")
-                displayPremiumRequests(requests)
+                premiumRequestAdapter.submitList(requests)
+                if (requests.isEmpty()) {
+                    Toast.makeText(context, "No premium requests found.", Toast.LENGTH_SHORT).show()
+                }
             } else {
-                Log.e("RequestPremiumFragment", "No premium requests fetched")
-                Toast.makeText(context, "No premium requests found", Toast.LENGTH_SHORT).show()
+                Log.e("RequestPremiumFragment", "Premium requests data is null")
+                Toast.makeText(context, "Failed to load premium requests.", Toast.LENGTH_SHORT).show()
             }
         }
 
-        binding.btnBack.setOnClickListener {
-            findNavController().navigateUp()
+        viewModel.updatePremiumError?.observe(viewLifecycleOwner) { errorMessage ->
+            errorMessage?.let {
+                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                viewModel.clearUpdatePremiumError()
+            }
         }
+
+
     }
 
-    private fun displayPremiumRequests(requests: List<PremiumRequest>) {
-        val tableLayout = binding.tableLayout
-        tableLayout.removeAllViews()
-
-        // Add header row
-        val headerRow = TableRow(context)
-        headerRow.addView(createTextView("Name"))
-        headerRow.addView(createTextView("Email"))
-        headerRow.addView(createTextView("KTP Photo"))
-        headerRow.addView(createTextView("Premium Status"))
-        headerRow.addView(createTextView("Action"))
-        tableLayout.addView(headerRow)
-
-        // Add data rows
-        requests.forEach { request ->
-            val row = TableRow(context)
-            val user = viewModel.getUserByEmail(request.userEmail)
-            val name = user?.fullName ?: "Unknown"
-
-            row.addView(createTextView(name))
-            row.addView(createTextView(request.userEmail))
-            row.addView(createImageView(request.ktpPhoto))
-            row.addView(createTextView(request.premium.toString()))
-            row.addView(createActionButtons(request))
-
-            tableLayout.addView(row)
-        }
-    }
-
-    private fun createTextView(tesxt: String): TextView {
-        return TextView(context).apply {
-            text = tesxt
-            setPadding(8, 8, 8, 8)
-        }
-    }
-
-    private fun createImageView(url: String): ImageView {
-        return ImageView(context).apply {
-            Glide.with(this).load(url).placeholder(android.R.drawable.ic_menu_gallery).into(this)
-            layoutParams = TableRow.LayoutParams(200, 200)
-            setPadding(8, 8, 8, 8)
-        }
-    }
-
-    private fun createActionButtons(request: PremiumRequest): TableRow {
-        val row = TableRow(context)
-        val acceptButton = Button(context).apply {
-            text = "Accept"
-            setOnClickListener {
+    private fun setupRecyclerView() {
+        premiumRequestAdapter = PremiumRequestAdapter(
+            onAcceptClick = { request ->
+                binding.progressBar.visibility = View.VISIBLE
                 viewModel.acceptPremiumRequest(request.id, adminEmail)
-                Toast.makeText(context, "Accepted request for ${request.userEmail}", Toast.LENGTH_SHORT).show()
-            }
-        }
-        val rejectButton = Button(context).apply {
-            text = "Reject"
-            setOnClickListener {
+                Toast.makeText(context, "Accepting request for ${request.userEmail}", Toast.LENGTH_SHORT).show()
+            },
+            onRejectClick = { request ->
+
+                binding.progressBar.visibility = View.VISIBLE
                 viewModel.rejectPremiumRequest(request.id, adminEmail)
-                Toast.makeText(context, "Rejected request for ${request.userEmail}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Rejecting request for ${request.userEmail}", Toast.LENGTH_SHORT).show()
             }
+        )
+
+        binding.premiumRequestRecyclerView.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = premiumRequestAdapter
         }
-        row.addView(acceptButton)
-        row.addView(rejectButton)
-        return row
     }
 
     override fun onDestroyView() {

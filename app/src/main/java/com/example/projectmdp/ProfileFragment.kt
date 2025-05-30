@@ -52,7 +52,7 @@ class ProfileFragment : Fragment() {
             result.data?.data?.let { uri ->
                 selectedImageUri = uri
                 Log.d("ProfileFragment", "Image selected: $uri")
-                binding.imageView2.setImageURI(uri)
+                binding.imageViewProfile.setImageURI(uri) // Menggunakan ID baru
                 viewLifecycleOwner.lifecycleScope.launch {
                     try {
                         withContext(Dispatchers.Main) { binding.loadingProgressBar.visibility = View.VISIBLE }
@@ -96,28 +96,22 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Ensure editTextText is editable and focusable
-        binding.editTextText.isEnabled = true
-        binding.editTextText.isFocusable = true
-        binding.editTextText.isFocusableInTouchMode = true
-        binding.editTextText.requestFocus() // Force focus to ensure keyboard appears
-        Log.d("ProfileFragment", "editTextText state: enabled=${binding.editTextText.isEnabled}, focusable=${binding.editTextText.isFocusable}")
 
-        // Observe user data once
         viewModel.user.observe(viewLifecycleOwner, { user ->
             if (user != null) {
                 Log.d("ProfileFragment", "User data received: email=${user.email}, phone=${user.phone}, photoUrl=${user.photoUrl}")
-                binding.editTextText3.setText(user.fullName)
-                binding.editTextText2.setText(user.email)
-                binding.editTextText.setText(user.phone)
+                binding.etFullName.setText(user.fullName)
+                binding.etEmail.setText(user.email)
+                binding.etPhone.setText(user.phone)
+
                 if (user.photoUrl.isNotEmpty()) {
-                    Glide.with(binding.imageView2)
+                    Glide.with(binding.imageViewProfile)
                         .load(user.photoUrl)
-                        .placeholder(R.drawable.profile)
-                        .error(R.drawable.profile)
-                        .into(binding.imageView2)
+                        .placeholder(R.drawable.ic_default_profile_image)
+                        .error(R.drawable.ic_default_profile_image)
+                        .into(binding.imageViewProfile)
                 } else {
-                    binding.imageView2.setImageResource(R.drawable.profile)
+                    binding.imageViewProfile.setImageResource(R.drawable.ic_default_profile_image)
                 }
             } else {
                 Log.e("ProfileFragment", "User data is null, navigating to login")
@@ -128,15 +122,16 @@ class ProfileFragment : Fragment() {
 
         viewModel.premiumStatus.observe(viewLifecycleOwner) { premium ->
             if (premium != null) {
-                binding.buttonPremium.isEnabled = !premium.premium
-                binding.buttonPremium.text = if (premium.premium) "Premium Activated" else "Get Premium"
+                binding.btnGetPremium.isEnabled = !premium.premium
+                binding.btnGetPremium.text = if (premium.premium) "Premium Activated" else "Get Premium"
             }
         }
 
-        binding.button2.setOnClickListener {
-            val newFullName = binding.editTextText3.text.toString().trim()
-            val newEmail = binding.editTextText2.text.toString().trim()
-            val newPhone = binding.editTextText.text.toString().trim()
+        // Save Profile Button
+        binding.btnSaveProfile.setOnClickListener {
+            val newFullName = binding.etFullName.text.toString().trim()
+            val newEmail = binding.etEmail.text.toString().trim()
+            val newPhone = binding.etPhone.text.toString().trim()
 
             Log.d("ProfileFragment", "Save clicked: newFullName=$newFullName, newEmail=$newEmail, newPhone=$newPhone")
 
@@ -150,21 +145,22 @@ class ProfileFragment : Fragment() {
                 val currentPhotoUrl = viewModel.user.value?.photoUrl ?: ""
                 viewModel.updateUserProfile(email, newFullName, newEmail, currentPhotoUrl, newPhone)
                 Toast.makeText(requireContext(), "Profile updated successfully", Toast.LENGTH_SHORT).show()
-                // Optionally refetch user data after a delay to ensure Firestore sync
                 viewLifecycleOwner.lifecycleScope.launch {
                     withContext(Dispatchers.IO) {
-                        kotlinx.coroutines.delay(1000) // Wait for Firestore to sync
+                        kotlinx.coroutines.delay(1000)
                     }
                     viewModel.fetchUser(newEmail.lowercase())
                 }
             } ?: Log.e("ProfileFragment", "Cannot update profile: userEmail is null")
         }
 
-        binding.button6.setOnClickListener {
+        // Back Button (header)
+        binding.btnBackHeader.setOnClickListener {
             findNavController().navigateUp()
         }
 
-        binding.buttonPremium.setOnClickListener {
+        // Get Premium Button
+        binding.btnGetPremium.setOnClickListener {
             userEmail?.let { email ->
                 val bundle = Bundle().apply {
                     putString("userEmail", email)
@@ -173,6 +169,7 @@ class ProfileFragment : Fragment() {
             } ?: Log.e("ProfileFragment", "Cannot navigate to GetPremiumFragment: userEmail is null")
         }
 
+        // Upload Photo Button
         binding.btnUploadPhoto.setOnClickListener {
             Log.d("ProfileFragment", "Upload photo button clicked")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -212,14 +209,14 @@ class ProfileFragment : Fragment() {
                 val photoUrl = response.data.link
                 Log.d("ProfileFragment", "Image uploaded successfully, URL: $photoUrl")
                 userEmail?.let { email ->
-                    viewModel.updateUserProfile(email, binding.editTextText3.text.toString(), binding.editTextText2.text.toString(), photoUrl)
+                    viewModel.updateUserProfile(email, binding.etFullName.text.toString(), binding.etEmail.text.toString(), photoUrl, binding.etPhone.text.toString()) // Menggunakan ID baru
                     withContext(Dispatchers.Main) {
                         Toast.makeText(context, "Photo uploaded to Imgur", Toast.LENGTH_SHORT).show()
-                        Glide.with(binding.imageView2)
+                        Glide.with(binding.imageViewProfile)
                             .load(photoUrl)
-                            .placeholder(R.drawable.profile)
-                            .error(R.drawable.profile)
-                            .into(binding.imageView2)
+                            .placeholder(R.drawable.ic_default_profile_image)
+                            .error(R.drawable.ic_default_profile_image)
+                            .into(binding.imageViewProfile)
                     }
                 } ?: Log.e("ProfileFragment", "Cannot update profile: userEmail is null")
             } else {
