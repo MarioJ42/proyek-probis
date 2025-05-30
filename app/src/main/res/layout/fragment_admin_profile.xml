@@ -6,7 +6,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#6200EA"
+        android:background="@drawable/gradient_background"
         android:padding="16dp">
 
         <!-- Header: Profile Title -->
@@ -60,7 +60,7 @@
                     android:hint="Full Name"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/imageView2"/>
+                    app:layout_constraintTop_toBottomOf="@id/imageView2" />
 
                 <!-- Email -->
                 <com.google.android.material.textfield.TextInputLayout
