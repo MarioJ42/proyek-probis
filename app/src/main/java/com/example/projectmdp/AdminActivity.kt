@@ -55,7 +55,7 @@ class AdminActivity : AppCompatActivity() {
         navController.addOnDestinationChangedListener { _, destination, _ ->
             Log.d("Navigation", "Navigated to destination: ${destination.id}, label: ${destination.label}")
             when (destination.id) {
-                R.id.loginFragment, R.id.registerFragment -> {
+                R.id.loginFragment, R.id.registerFragment, R.id.pinFragment -> {
                     bottomNavigationViews.visibility = View.GONE
                 }
                 else -> {

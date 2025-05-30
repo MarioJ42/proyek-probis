@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/frameLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/gradient_background">
+
+        <TextView
+            android:id="@+id/titleTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Masukkan Security Code Anda"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="64dp" />
+
+        <LinearLayout
+            android:id="@+id/pinContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            app:layout_constraintTop_toBottomOf="@id/titleTextView"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="48dp">
+
+            <TextView
+                android:id="@+id/pinDot1"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:gravity="center"
+                android:text=""
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:background="@drawable/pin_circle_background"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/pinDot2"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:gravity="center"
+                android:text=""
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:background="@drawable/pin_circle_background"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/pinDot3"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:gravity="center"
+                android:text=""
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:background="@drawable/pin_circle_background"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/pinDot4"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:gravity="center"
+                android:text=""
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:background="@drawable/pin_circle_background"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/pinDot5"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:gravity="center"
+                android:text=""
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:background="@drawable/pin_circle_background"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/pinDot6"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:gravity="center"
+                android:text=""
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:background="@drawable/pin_circle_background" />
+        </LinearLayout>
+
+        <!-- Keypad Container -->
+        <GridLayout
+            android:id="@+id/keypadContainer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:columnCount="3"
+            android:rowCount="4"
+            app:layout_constraintTop_toBottomOf="@id/pinContainer"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginTop="48dp"
+            android:background="@drawable/gradient_background">
+
+            <Button
+                android:id="@+id/key1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="1"
+                android:textSize="20sp"
+                android:background="@android:color/white"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_gravity="fill" />
+
+            <Button
+                android:id="@+id/key2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="2 ABC"
+                android:textSize="20sp"
+                android:background="@android:color/white"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_gravity="fill" />
+
+            <Button
+                android:id="@+id/key3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="3 DEF"
+                android:textSize="20sp"
+                android:background="@android:color/white"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_gravity="fill" />
+
+            <Button
+                android:id="@+id/key4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="4 GHI"
+                android:textSize="20sp"
+                android:background="@android:color/white"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_gravity="fill" />
+
+            <Button
+                android:id="@+id/key5"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="5 JKL"
+                android:textSize="20sp"
+                android:background="@android:color/white"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_gravity="fill" />
+
+            <Button
+                android:id="@+id/key6"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="6 MNO"
+                android:textSize="20sp"
+                android:background="@android:color/white"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_gravity="fill" />
+
+            <Button
+                android:id="@+id/key7"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="7 PQR"
+                android:textSize="20sp"
+                android:background="@android:color/white"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_gravity="fill" />
+
+            <Button
+                android:id="@+id/key8"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="8 TUV"
+                android:textSize="20sp"
+                android:background="@android:color/white"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_gravity="fill" />
+
+            <Button
+                android:id="@+id/key9"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="9 WXY"
+                android:textSize="20sp"
+                android:background="@android:color/white"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_gravity="fill" />
+
+            <Button
+                android:id="@+id/keyDelete"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="X"
+                android:textSize="20sp"
+                android:background="@android:color/white"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_gravity="fill" />
+
+            <Button
+                android:id="@+id/key0"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="0 +"
+                android:textSize="20sp"
+                android:background="@android:color/white"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_gravity="fill" />
+
+            <Button
+                android:id="@+id/keyConfirm"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="✔"
+                android:textSize="20sp"
+                android:background="#32CD32"
+                android:textColor="#FFFFFF"
+                android:layout_columnWeight="1"
+                android:layout_rowWeight="1"
+                android:layout_gravity="fill" />
+        </GridLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>

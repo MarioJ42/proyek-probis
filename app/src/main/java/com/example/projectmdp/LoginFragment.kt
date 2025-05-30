@@ -22,6 +22,7 @@ class LoginFragment : Fragment() {
     private val viewModel: UserViewModel by viewModels { UserViewModelFactory() }
     private lateinit var db: AppDatabase
     private lateinit var dao: RememberedUserDAO
+    var isAutoLogin = false
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -39,6 +40,10 @@ class LoginFragment : Fragment() {
                 binding.inputEmail.setText(it.email)
                 binding.inputPassword.setText(it.password)
                 binding.checkboxRemember.isChecked = true
+                if (!isAutoLogin) {
+                    isAutoLogin = true
+                    viewModel.login(it.email, it.password)
+                }
             }
         }
 //        lifecycleScope.launch {
@@ -113,11 +118,12 @@ class LoginFragment : Fragment() {
                                     startActivity(intent)
                                     requireActivity().finish()
                                 } else {
-                                    findNavController().navigate(R.id.action_loginFragment_to_homeFragment, bundle)
+                                    findNavController().navigate(R.id.action_loginFragment_to_pinFragment, bundle)
                                 }
                                 viewModel.clearLoginResult()
                             } catch (e: IllegalArgumentException) {
                                 Toast.makeText(requireContext(), "Already logged in", Toast.LENGTH_SHORT).show()
+                                Log.d("RememberMe", "Loaded: ${e.message}")
                             }
                         }
                     }

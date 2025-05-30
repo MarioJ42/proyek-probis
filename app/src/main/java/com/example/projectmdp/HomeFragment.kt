@@ -97,6 +97,7 @@ class HomeFragment : Fragment() {
         }
 
         binding.btnLogout.setOnClickListener {
+            viewModel.clearRememberMe()
             (activity as? MainActivity)?.let { mainActivity ->
                 mainActivity.userEmail = null
             }

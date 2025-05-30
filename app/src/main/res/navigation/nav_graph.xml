@@ -27,6 +27,9 @@
         <action
             android:id="@+id/action_loginFragment_to_premiumUsersFragment2"
             app:destination="@id/premiumUsersFragment2" />
+        <action
+            android:id="@+id/action_loginFragment_to_pinFragment"
+            app:destination="@id/pinFragment" />
     </fragment>
     <action
         android:id="@+id/action_topUpFragment_to_loginFragment"
@@ -337,4 +340,12 @@
     <action android:id="@+id/action_global_adminProfileFragment2" app:destination="@id/adminProfileFragment2" />
     <action android:id="@+id/action_global_allUsersFragment2" app:destination="@id/allUsersFragment2" />
     <action android:id="@+id/action_global_premiumUsersFragment2" app:destination="@id/premiumUsersFragment2" />
+    <fragment
+        android:id="@+id/pinFragment"
+        android:name="com.example.projectmdp.PinFragment"
+        android:label="PinFragment" >
+        <action
+            android:id="@+id/action_pinFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+    </fragment>
 </navigation>
