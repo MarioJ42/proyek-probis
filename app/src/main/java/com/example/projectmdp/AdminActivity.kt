@@ -14,7 +14,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 class AdminActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAdminBinding
     private lateinit var navController: NavController
-    private lateinit var bottomNavigationView: BottomNavigationView
+    private lateinit var bottomNavigationViews: BottomNavigationView
     var userEmail: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,11 +24,11 @@ class AdminActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.fragmentContainerView2) as NavHostFragment
         navController = navHostFragment.navController
-        bottomNavigationView = findViewById(R.id.bottom_navigation)
-        bottomNavigationView.setupWithNavController(navController)
+        bottomNavigationViews = findViewById(R.id.bottom_navigation)
+        bottomNavigationViews.setupWithNavController(navController)
         userEmail = intent.getStringExtra("userEmail") ?: ""
 
-        bottomNavigationView.setOnItemSelectedListener { item ->
+        bottomNavigationViews.setOnItemSelectedListener { item ->
             val bundle = Bundle().apply {
                 userEmail?.let { putString("userEmail", it) }
             }
@@ -56,10 +56,10 @@ class AdminActivity : AppCompatActivity() {
             Log.d("Navigation", "Navigated to destination: ${destination.id}, label: ${destination.label}")
             when (destination.id) {
                 R.id.loginFragment, R.id.registerFragment -> {
-                    bottomNavigationView.visibility = View.GONE
+                    bottomNavigationViews.visibility = View.GONE
                 }
                 else -> {
-                    bottomNavigationView.visibility = View.VISIBLE
+                    bottomNavigationViews.visibility = View.VISIBLE
                 }
             }
         }
@@ -68,7 +68,7 @@ class AdminActivity : AppCompatActivity() {
                 putString("userEmail", userEmail)
             }
             navController.navigate(R.id.allUsersFragment2, bundle)
-            bottomNavigationView.selectedItemId = R.id.allUsersFragment2
+            bottomNavigationViews.selectedItemId = R.id.allUsersFragment2
         }
     }
 

@@ -241,6 +241,9 @@
         <action
             android:id="@+id/action_adminProfileFragment2_to_requestPremiumFragment"
             app:destination="@id/requestPremiumFragment" />
+        <action
+            android:id="@+id/action_adminProfileFragment2_to_loginFragment2"
+            app:destination="@id/loginFragment" />
     </fragment>
     <fragment
         android:id="@+id/allUsersFragment2"
@@ -261,6 +264,9 @@
         <action
             android:id="@+id/action_allUsersFragment2_to_requestPremiumFragment"
             app:destination="@id/requestPremiumFragment" />
+        <action
+            android:id="@+id/action_allUsersFragment2_to_loginFragment"
+            app:destination="@id/loginFragment" />
     </fragment>
     <fragment
         android:id="@+id/premiumUsersFragment2"
@@ -276,6 +282,9 @@
         <action
             android:id="@+id/action_premiumUsersFragment2_to_adminProfileFragment2"
             app:destination="@id/adminProfileFragment2" />
+        <action
+            android:id="@+id/action_premiumUsersFragment2_to_loginFragment"
+            app:destination="@id/loginFragment" />
     </fragment>
     <fragment
         android:id="@+id/investasiTabunganFragment"

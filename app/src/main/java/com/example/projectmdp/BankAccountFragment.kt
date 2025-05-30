@@ -3,6 +3,7 @@ package com.example.projectmdp
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -34,13 +35,12 @@ class BankAccountFragment : Fragment() {
         viewModel.fetchUser(userEmail)
         viewModel.fetchBankAccounts(userEmail)
 
-        // Setup Bank Name Dropdown
         val bankOptions = arrayOf("BCA", "Mandiri", "Danamon", "Permata", "BNI")
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, bankOptions)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.bankNameSpinner.adapter = adapter
+        val adapter = ArrayAdapter(requireContext(), R.layout.dropdown_menu_item, bankOptions)
+        binding.bankNameAutoCompleteTextView.setAdapter(adapter)
 
-        // Setup Account Number Formatting
+        binding.bankNameAutoCompleteTextView.setText(bankOptions[0], false)
+
         binding.accountNumber.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
@@ -50,11 +50,8 @@ class BankAccountFragment : Fragment() {
                 if (isFormatting) return
                 isFormatting = true
 
-                // Remove all non-digit characters
                 val digitsOnly = s.toString().replace(Regex("[^0-9]"), "")
-                // Limit to 16 digits
                 val limitedDigits = if (digitsOnly.length > 16) digitsOnly.substring(0, 16) else digitsOnly
-                // Format with spaces every 4 digits
                 val formatted = limitedDigits.chunked(4).joinToString(" ")
                 binding.accountNumber.setText(formatted)
                 binding.accountNumber.setSelection(formatted.length)
@@ -68,7 +65,7 @@ class BankAccountFragment : Fragment() {
         }
 
         binding.saveButton.setOnClickListener {
-            val bankName = binding.bankNameSpinner.selectedItem.toString()
+            val bankName = binding.bankNameAutoCompleteTextView.text.toString()
             val accountNumber = binding.accountNumber.text.toString().replace(" ", "")
             val accountHolderName = binding.accountHolderName.text.toString().trim()
 
@@ -87,7 +84,8 @@ class BankAccountFragment : Fragment() {
                     Toast.makeText(context, "Bank account saved successfully", Toast.LENGTH_SHORT).show()
                     findNavController().popBackStack()
                 } else {
-                    Toast.makeText(context, "Failed to save bank account: $error", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Failed to save bank account: ${error.length}", Toast.LENGTH_LONG).show()
+                    Log.e("BankAccountFragment", "Save bank account error: $error")
                 }
             }
         }

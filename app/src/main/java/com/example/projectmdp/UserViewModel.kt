@@ -52,6 +52,7 @@ data class Deposit(
 
 
 class UserViewModel : ViewModel() {
+
     private val db = Firebase.firestore
     private val usersCollection = db.collection("users")
     private val premiumCollection = db.collection("premium")
@@ -135,7 +136,23 @@ class UserViewModel : ViewModel() {
             }
         }
     }
+    fun saverememberme(content: RememberUser){
+        viewModelScope.launch {
+            MyApplication.db.RememberedUserDAO().insertUser(content)
+        }
+    }
+    fun getRememberMe(onResult: (RememberUser?) -> Unit) {
+        viewModelScope.launch {
+            val user = MyApplication.db.RememberedUserDAO().getUser(0)
+            onResult(user)
+        }
+    }
 
+    fun clearRememberMe() {
+        viewModelScope.launch {
+            MyApplication.db.RememberedUserDAO().clearRememberedUser()
+        }
+    }
     fun login(email: String, password: String) {
         viewModelScope.launch {
             try {

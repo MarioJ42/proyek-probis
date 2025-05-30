@@ -47,12 +47,13 @@ class AdminProfileFragment : Fragment() {
             return
         }
         binding.editTextText2.setText(userEmail)
-        binding.button3.setOnClickListener{
-            (activity as? AdminActivity)?.let { adminActivity ->
-                adminActivity.userEmail = null
+        binding.button3.setOnClickListener {
+            (activity as? AdminActivity)?.userEmail = null
+            val intent = Intent(requireContext(), MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
-            findNavController().popBackStack(R.id.loginFragment, true)
-            findNavController().navigate(R.id.loginFragment)
+            startActivity(intent)
+            activity?.finish()
         }
     }
 
