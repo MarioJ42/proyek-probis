@@ -3,29 +3,37 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@android:color/white"
     android:padding="16dp">
 
     <!-- Back Button -->
     <Button
         android:id="@+id/btnBack"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Back"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_height="32dp"
+        android:text="Kembali"
+        android:textSize="12sp"
+        android:background="@drawable/rounded_purple_button"
+        android:textColor="@android:color/white"
+        android:enabled="true"
+    android:clickable="true"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    android:layout_marginTop="8dp" />
 
     <!-- Title -->
     <TextView
         android:id="@+id/titleTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="QRIS Payment"
-        android:textSize="20sp"
+        android:text="Pembayaran QRIS"
+        android:textSize="24sp"
         android:textStyle="bold"
+        android:textColor="@android:color/black"
         app:layout_constraintTop_toBottomOf="@id/btnBack"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="8dp" />
 
     <!-- Status Text -->
     <TextView
@@ -34,6 +42,7 @@
         android:layout_height="wrap_content"
         android:text="Status: Scan or enter QR code"
         android:textSize="16sp"
+        android:textColor="@android:color/black"
         app:layout_constraintTop_toBottomOf="@id/titleTextView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -48,6 +57,7 @@
         android:text="Amount: Rp 0"
         android:textSize="18sp"
         android:textStyle="bold"
+        android:textColor="@android:color/black"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/statusTextView"
         app:layout_constraintStart_toStartOf="parent"
@@ -87,6 +97,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Scan QR"
+            android:background="@drawable/gradient_button"
+            android:textColor="@android:color/white"
             android:layout_marginEnd="4dp" />
 
         <Button
@@ -95,16 +107,21 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Pick Image"
+            android:background="@drawable/gradient_button"
+            android:textColor="@android:color/white"
             android:layout_marginStart="4dp" />
     </LinearLayout>
 
-    <!-- QR URL Input (Moved Below QR Container) -->
+    <!-- QR URL Input -->
     <EditText
         android:id="@+id/qrUrlEditText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="Enter QR URL"
         android:inputType="textUri"
+        android:background="@drawable/rounded_edittext"
+        android:padding="8dp"
+        android:textColor="@android:color/black"
         app:layout_constraintTop_toBottomOf="@id/qrActionButtons"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -117,6 +134,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Use QR Link"
+        android:background="@drawable/gradient_button"
+        android:textColor="@android:color/white"
         app:layout_constraintTop_toBottomOf="@id/qrUrlEditText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -129,11 +148,14 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Validate Payment"
-        app:layout_constraintTop_toBottomOf="@id/btnUseQrLink"
+        android:background="@drawable/gradient_button"
+        android:textColor="@android:color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintWidth_percent="0.9"
-        android:layout_marginTop="16dp" />
+        android:layout_marginBottom="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp" />
 
     <!-- Loading Progress Bar -->
     <ProgressBar
