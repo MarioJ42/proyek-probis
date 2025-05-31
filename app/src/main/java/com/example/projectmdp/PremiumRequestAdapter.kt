@@ -18,7 +18,8 @@ import java.util.Locale
 
 class PremiumRequestAdapter(
     private val onAcceptClick: (PremiumRequest) -> Unit,
-    private val onRejectClick: (PremiumRequest) -> Unit
+    private val onRejectClick: (PremiumRequest) -> Unit,
+    private val onDetailClick: (PremiumRequest) -> Unit,
 ) : ListAdapter<PremiumRequest, PremiumRequestAdapter.PremiumRequestViewHolder>(PremiumRequestDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PremiumRequestViewHolder {
@@ -29,7 +30,7 @@ class PremiumRequestAdapter(
 
     override fun onBindViewHolder(holder: PremiumRequestViewHolder, position: Int) {
         val request = getItem(position)
-        holder.bind(request, onAcceptClick, onRejectClick, position)
+        holder.bind(request, onAcceptClick, onRejectClick,onDetailClick, position)
     }
 
     class PremiumRequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -38,10 +39,11 @@ class PremiumRequestAdapter(
         private val emailText: TextView = itemView.findViewById(R.id.emailText)
         private val ktpPhotoImageView: ImageView = itemView.findViewById(R.id.ktpPhotoImageView)
         private val premiumStatusText: TextView = itemView.findViewById(R.id.premiumStatusText)
-        private val acceptButton: com.google.android.material.button.MaterialButton = itemView.findViewById(R.id.acceptButton)
-        private val rejectButton: com.google.android.material.button.MaterialButton = itemView.findViewById(R.id.rejectButton)
+        private val detailButton: com.google.android.material.button.MaterialButton = itemView.findViewById(R.id.detailButton)
+//        private val rejectButton: com.google.android.material.button.MaterialButton = itemView.findViewById(R.id.Decbtn)
+//        private val acceptButton: com.google.android.material.button.MaterialButton = itemView.findViewById(R.id.AccBtn)
 
-        fun bind(request: PremiumRequest, onAcceptClick: (PremiumRequest) -> Unit, onRejectClick: (PremiumRequest) -> Unit, position: Int) {
+        fun bind(request: PremiumRequest, onAcceptClick: (PremiumRequest) -> Unit, onRejectClick: (PremiumRequest) -> Unit, onDetailClick: (PremiumRequest) -> Unit, position: Int) {
             val context = itemView.context
 
             val backgroundColor = if (position % 2 == 0) {
@@ -74,13 +76,16 @@ class PremiumRequestAdapter(
             premiumStatusText.setTextColor(statusColor)
 
             if (request.requestPremium) {
-                acceptButton.visibility = View.VISIBLE
-                rejectButton.visibility = View.VISIBLE
-                acceptButton.setOnClickListener { onAcceptClick(request) }
-                rejectButton.setOnClickListener { onRejectClick(request) }
+                detailButton.visibility = View.VISIBLE
+//                rejectButton.visibility = View.VISIBLE
+//                acceptButton.visibility = View.VISIBLE
+//                acceptButton.setOnClickListener { onAcceptClick(request) }
+//                rejectButton.setOnClickListener { onRejectClick(request) }
+                detailButton.setOnClickListener { onDetailClick(request)}
             } else {
-                acceptButton.visibility = View.GONE
-                rejectButton.visibility = View.GONE
+                detailButton.visibility = View.GONE
+//                rejectButton.visibility = View.GONE
+//                acceptButton.visibility = View.GONE
             }
         }
     }

@@ -23,13 +23,15 @@ class AdminViewModel : ViewModel() {
     private val db = Firebase.firestore
     private val usersCollection = db.collection("users")
     private val premiumCollection = db.collection("premium")
-
+    private val _selectedUser = MutableLiveData<User?>()
+    val selectedUser: LiveData<User?> get() = _selectedUser
     private val _users = MutableLiveData<List<User>>()
     val users: LiveData<List<User>> get() = _users
 
     private val _premiumUsers = MutableLiveData<List<User>>()
     val premiumUsers: LiveData<List<User>> get() = _premiumUsers
-
+    private val _selectedPremiumRequest = MutableLiveData<Premium?>()
+    val selectedPremiumRequest: LiveData<Premium?> get() = _selectedPremiumRequest
     private val _premiumRequests = MutableLiveData<List<PremiumRequest>>()
     val premiumRequests: LiveData<List<PremiumRequest>> get() = _premiumRequests
 
@@ -151,20 +153,34 @@ class AdminViewModel : ViewModel() {
     fun clearUpdatePremiumError() {
         _updatePremiumError.postValue(null)
     }
-
-    fun getUserByEmail(email: String): User? {
-        return _userCache[email] ?: run {
+    fun getUserByEmail(email: String) {
+        if (_userCache[email] != null) {
+            _selectedUser.postValue(_userCache[email])
+        } else {
             viewModelScope.launch {
                 try {
                     val snapshot = usersCollection.whereEqualTo("email", email).get().await()
                     val user = snapshot.documents.firstOrNull()?.toObject(User::class.java)?.copy(id = snapshot.documents[0].id)
                     _userCache[email] = user
+                    _selectedUser.postValue(user)
                 } catch (e: Exception) {
                     Log.e("AdminViewModel", "Error fetching user by email $email: ${e.message}")
-                    _userCache[email] = null
+                    _selectedUser.postValue(null)
                 }
             }
-            null
+        }
+    }
+    fun getUserrequestByEmail(email: String){
+        viewModelScope.launch {
+            try {
+                val snapshot = premiumCollection.whereEqualTo("userEmail", email).get().await()
+                val premiumuser = snapshot.documents.firstOrNull()?.toObject(Premium::class.java)
+                    ?.copy(id = snapshot.documents[0].id)
+                _selectedPremiumRequest.postValue(premiumuser)
+            } catch (e: Exception) {
+                Log.e("AdminViewModel", "Error fetching premium request by email $email: ${e.message}")
+                _selectedPremiumRequest.postValue(null)
+            }
         }
     }
 }

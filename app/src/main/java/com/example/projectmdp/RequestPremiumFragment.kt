@@ -84,6 +84,11 @@ class RequestPremiumFragment : Fragment() {
                 binding.progressBar.visibility = View.VISIBLE
                 viewModel.rejectPremiumRequest(request.id, adminEmail)
                 Toast.makeText(context, "Rejecting request for ${request.userEmail}", Toast.LENGTH_SHORT).show()
+            },
+            onDetailClick = { request ->
+                val action = RequestPremiumFragmentDirections
+                    .actionRequestPremiumFragmentToUserDetailPremiumFragment(request.userEmail)
+                findNavController().navigate(action)
             }
         )
 

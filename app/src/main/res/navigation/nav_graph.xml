@@ -229,6 +229,9 @@
         <action
             android:id="@+id/action_requestPremiumFragment_to_premiumUsersFragment2"
             app:destination="@id/premiumUsersFragment2" />
+        <action
+            android:id="@+id/action_requestPremiumFragment_to_userDetailPremiumFragment"
+            app:destination="@id/userDetailPremiumFragment" />
     </fragment>
     <fragment
         android:id="@+id/adminProfileFragment2"
@@ -347,5 +350,17 @@
         <action
             android:id="@+id/action_pinFragment_to_homeFragment"
             app:destination="@id/homeFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/userDetailPremiumFragment"
+        android:name="com.example.projectmdp.UserDetailPremiumFragment"
+        android:label="fragment_user_detail_premium"
+        tools:layout="@layout/fragment_user_detail_premium" >
+        <argument
+            android:name="userEmail"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_userDetailPremiumFragment_to_requestPremiumFragment"
+            app:destination="@id/requestPremiumFragment" />
     </fragment>
 </navigation>
