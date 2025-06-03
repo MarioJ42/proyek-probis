@@ -16,9 +16,19 @@ class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
     private val viewModel: UserViewModel by viewModels { UserViewModelFactory() }
-
     private var isBalanceHidden: Boolean = false
     private var currentBalanceValue: Double = 0.0
+    private var userEmail: String? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        userEmail = arguments?.getString("userEmail")?.lowercase()
+        Log.d("HomeFragment", "Received userEmail: $userEmail")
+        userEmail?.let { email ->
+            viewModel.setUserEmail(email)
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -30,15 +40,14 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val userEmail = arguments?.getString("userEmail") ?: ""
-        Log.d("HomeFragment", "Received userEmail: $userEmail")
-        if (userEmail.isEmpty()) {
+        if (userEmail.isNullOrEmpty()) {
+            Log.e("HomeFragment", "userEmail is empty, navigating to login")
             findNavController().navigate(R.id.action_homeFragment_to_loginFragment)
             return
         }
 
-        if (viewModel.userEmail.value != userEmail.lowercase()) {
-            viewModel.fetchUser(userEmail)
+        if (viewModel.userEmail.value != userEmail) {
+            viewModel.fetchUser(userEmail!!)
         }
 
         viewModel.user.observe(viewLifecycleOwner) { user ->
@@ -49,7 +58,9 @@ class HomeFragment : Fragment() {
                     "Hello, ${user.fullName}!" + if (user.premium) " (Premium)" else ""
                 }
                 binding.username.text = greeting
+                userEmail = user.email
             } else {
+                Log.e("HomeFragment", "User is null, navigating to login")
                 findNavController().navigate(R.id.action_homeFragment_to_loginFragment)
             }
         }
@@ -60,42 +71,53 @@ class HomeFragment : Fragment() {
             Log.d("HomeFragment", "Balance updated: $balance")
         }
 
+        viewModel.userEmail.observe(viewLifecycleOwner) { email ->
+            if (email != null && email == userEmail) {
+                viewModel.fetchUser(email)
+            } else if (email == null) {
+                Log.e("HomeFragment", "userEmail is null in ViewModel, navigating to login")
+                findNavController().navigate(R.id.action_homeFragment_to_loginFragment)
+            }
+        }
+
         binding.balanceVisibilityToggle.setOnClickListener {
             isBalanceHidden = !isBalanceHidden
             updateBalanceDisplay()
         }
 
         binding.topUp.setOnClickListener {
-            val bundle = Bundle().apply {
-                putString("userEmail", userEmail)
+            userEmail?.let { email ->
+                val bundle = Bundle().apply { putString("userEmail", email) }
+                findNavController().navigate(R.id.action_homeFragment_to_topUpFragment, bundle)
             }
-            findNavController().navigate(R.id.action_homeFragment_to_topUpFragment, bundle)
         }
 
         binding.transfer.setOnClickListener {
-            val bundle = Bundle().apply {
-                putString("userEmail", userEmail)
+            userEmail?.let { email ->
+                val bundle = Bundle().apply { putString("userEmail", email) }
+                findNavController().navigate(R.id.action_homeFragment_to_transferFragment, bundle)
             }
-            findNavController().navigate(R.id.action_homeFragment_to_transferFragment, bundle)
         }
 
         binding.history.setOnClickListener {
-            val bundle = Bundle().apply { putString("userEmail", userEmail) }
-            findNavController().navigate(R.id.action_homeFragment_to_historyFragment, bundle)
+            userEmail?.let { email ->
+                val bundle = Bundle().apply { putString("userEmail", email) }
+                findNavController().navigate(R.id.action_homeFragment_to_historyFragment, bundle)
+            }
         }
 
         binding.investasi.setOnClickListener {
-            val bundle = Bundle().apply {
-                putString("userEmail", userEmail)
+            userEmail?.let { email ->
+                val bundle = Bundle().apply { putString("userEmail", email) }
+                findNavController().navigate(R.id.action_homeFragment_to_investasiTabunganFragment, bundle)
             }
-            findNavController().navigate(R.id.action_homeFragment_to_investasiTabunganFragment, bundle)
         }
 
         binding.qris.setOnClickListener {
-            val bundle = Bundle().apply {
-                putString("userEmail", userEmail)
+            userEmail?.let { email ->
+                val bundle = Bundle().apply { putString("userEmail", email) }
+                findNavController().navigate(R.id.action_homeFragment_to_qrisPaymentFragment, bundle)
             }
-            findNavController().navigate(R.id.action_homeFragment_to_qrisPaymentFragment, bundle)
         }
 
         binding.btnLogout.setOnClickListener {
@@ -105,6 +127,14 @@ class HomeFragment : Fragment() {
             }
             findNavController().popBackStack(R.id.loginFragment, true)
             findNavController().navigate(R.id.loginFragment)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        userEmail?.let { email ->
+            viewModel.fetchUser(email)
+            Log.d("HomeFragment", "onResume: Fetching user data for email=$email")
         }
     }
 

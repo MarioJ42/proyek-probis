@@ -83,8 +83,8 @@ class DepositPurchaseFragment : Fragment() {
     private fun setupListeners() {
         binding.simulateButton.setOnClickListener {
             val amount = binding.amountInput.text.toString().toDoubleOrNull() ?: 0.0
-            if (amount < 5_000_000) {
-                Toast.makeText(context, "Jumlah minimum Rp5.000.000", Toast.LENGTH_SHORT).show()
+            if (amount < 100_000) {
+                Toast.makeText(context, "Jumlah minimum Rp100.000", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -126,8 +126,8 @@ class DepositPurchaseFragment : Fragment() {
 
         binding.confirmButton.setOnClickListener {
             val amount = binding.amountInput.text.toString().toDoubleOrNull() ?: 0.0
-            if (amount < 5_000_000) {
-                Toast.makeText(context, "Jumlah minimum Rp5.000.000", Toast.LENGTH_SHORT).show()
+            if (amount < 100_000) {
+                Toast.makeText(context, "Jumlah minimum Rp100.000", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -231,6 +231,8 @@ class DepositPurchaseFragment : Fragment() {
             }
         }
     }
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()

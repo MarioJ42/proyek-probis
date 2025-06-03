@@ -305,9 +305,6 @@ class QrisPaymentFragment : Fragment() {
                 }
                 Log.d("QrisPayment", "Navigating to PinVerificationFragment with amount=${amount!!.toFloat()}")
                 findNavController().navigate(R.id.action_qrisPaymentFragment_to_pinVerificationFragment, bundle)
-                isProcessingPayment = false
-                binding.btnValidatePayment.isEnabled = true
-                binding.loadingProgressBar.visibility = View.GONE
             }
         }
 
@@ -324,17 +321,7 @@ class QrisPaymentFragment : Fragment() {
                                     viewModel.processQrisPayment(email, oid, amt)
                                     withContext(Dispatchers.Main) {
                                         if (isAdded) {
-                                            Toast.makeText(context, "Payment successful", Toast.LENGTH_SHORT).show()
-                                            val db = FirebaseFirestore.getInstance()
-                                            db.collection("qris_payments").document(oid)
-                                                .update("status", "settlement")
-                                                .addOnSuccessListener {
-                                                    Log.d("QrisPayment", "Firestore payment status updated to settlement for orderId=$oid")
-                                                }
-                                                .addOnFailureListener { e ->
-                                                    Log.e("QrisPayment", "Failed to update Firestore payment status: ${e.message}")
-                                                }
-                                            findNavController().popBackStack(R.id.homeFragment, false)
+                                            binding.loadingProgressBar.visibility = View.VISIBLE
                                         }
                                     }
                                 } catch (e: Exception) {
@@ -366,6 +353,39 @@ class QrisPaymentFragment : Fragment() {
                 Log.e("QrisPayment", "PIN verification failed: $errorMessage")
                 Toast.makeText(context, "Payment failed: $errorMessage", Toast.LENGTH_LONG).show()
                 resetUI()
+            }
+        }
+
+        viewModel.paymentResult.observe(viewLifecycleOwner) { result ->
+            binding.loadingProgressBar.visibility = View.GONE
+            binding.btnValidatePayment.isEnabled = true
+            isProcessingPayment = false
+
+            when (result) {
+                is PaymentResult.Success -> {
+                    Log.d("QrisPayment", "Payment successful: amount=${result.amount}")
+                    Toast.makeText(context, "Payment successful", Toast.LENGTH_SHORT).show()
+                    userEmail?.let { email ->
+                        orderId?.let { oid ->
+                            val db = FirebaseFirestore.getInstance()
+                            db.collection("qris_payments").document(oid)
+                                .update("status", "settlement")
+                                .addOnSuccessListener {
+                                    Log.d("QrisPayment", "Firestore payment status updated to settlement for orderId=$oid")
+                                }
+                                .addOnFailureListener { e ->
+                                    Log.e("QrisPayment", "Failed to update Firestore payment status: ${e.message}")
+                                }
+                            val bundle = Bundle().apply { putString("userEmail", email) }
+                            findNavController().navigate(R.id.action_qrisPaymentFragment_to_homeFragment, bundle)
+                        }
+                    } ?: findNavController().navigate(R.id.action_qrisPaymentFragment_to_loginFragment)
+                }
+                is PaymentResult.Failure -> {
+                    Log.e("QrisPayment", "Payment failed: ${result.message}")
+                    Toast.makeText(context, "Payment failed: ${result.message}", Toast.LENGTH_LONG).show()
+                    resetUI()
+                }
             }
         }
 

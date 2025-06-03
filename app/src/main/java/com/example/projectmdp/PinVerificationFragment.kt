@@ -21,6 +21,8 @@ class PinVerificationFragment : Fragment() {
     private val viewModel: UserViewModel by viewModels { UserViewModelFactory() }
     private val pinList = mutableListOf<TextView>()
     private var pin = ""
+    private var attemptCount = 0
+    private val maxAttempts = 3
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -115,16 +117,28 @@ class PinVerificationFragment : Fragment() {
                 return@observe
             }
             if (user.pin != pin) {
-                Log.d("PinVerification", "Invalid PIN entered")
-                Toast.makeText(requireContext(), "Invalid PIN", Toast.LENGTH_SHORT).show()
-                setFragmentResult("pin_verification_result", Bundle().apply {
-                    putBoolean("success", false)
-                    putString("errorMessage", "Invalid PIN")
-                })
-                findNavController().navigateUp()
+                attemptCount++
+                val attemptsLeft = maxAttempts - attemptCount
+                if (attemptCount < maxAttempts) {
+                    Log.d("PinVerification", "Invalid PIN entered, attempt $attemptCount of $maxAttempts")
+                    Toast.makeText(requireContext(), "Invalid PIN. $attemptsLeft attempts left.", Toast.LENGTH_SHORT).show()
+                    pin = ""
+                    updatePinDisplay()
+                } else {
+                    Log.d("PinVerification", "Max PIN attempts reached, navigating to HomeFragment")
+                    Toast.makeText(requireContext(), "Max attempts reached. Returning to Home.", Toast.LENGTH_SHORT).show()
+                    setFragmentResult("pin_verification_result", Bundle().apply {
+                        putBoolean("success", false)
+                        putString("errorMessage", "Max PIN attempts reached")
+                    })
+                    val bundle = Bundle().apply { putString("userEmail", userEmail) }
+                    findNavController().navigate(R.id.action_pinVerificationFragment_to_homeFragment, bundle)
+                    attemptCount = 0
+                }
                 return@observe
             }
 
+            attemptCount = 0
             Log.d("PinVerification", "PIN verified, processing transferType: $transferType, amount=$amount")
             lifecycleScope.launch {
                 when (transferType) {

@@ -53,7 +53,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:inputType="numberDecimal"
-        android:hint="Masukkan jumlah (min. Rp5,000,000)"
+        android:hint="Masukkan jumlah (min. Rp 100,000)"
         android:background="@drawable/rounded_edittext"
         android:padding="8dp"
         android:textSize="16sp"

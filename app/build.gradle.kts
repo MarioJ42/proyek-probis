@@ -40,6 +40,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.1.0"))

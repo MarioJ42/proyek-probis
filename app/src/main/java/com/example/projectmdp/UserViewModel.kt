@@ -1,7 +1,6 @@
 package com.example.projectmdp
 
 import android.util.Log
-import android.widget.Toast
 import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -9,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.projectmdp.network.SimulateQrisRequest
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +17,7 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import java.util.Calendar
+import java.util.UUID
 
 sealed class PaymentResult {
     data class Success(val amount: Double) : PaymentResult()
@@ -49,7 +50,6 @@ data class Deposit(
     val status: String = "Active",
     val orderId: String = ""
 )
-
 
 class UserViewModel : ViewModel() {
 
@@ -136,11 +136,13 @@ class UserViewModel : ViewModel() {
             }
         }
     }
-    fun saverememberme(content: RememberUser){
+
+    fun saverememberme(content: RememberUser) {
         viewModelScope.launch {
             MyApplication.db.RememberedUserDAO().insertUser(content)
         }
     }
+
     fun getRememberMe(onResult: (RememberUser?) -> Unit) {
         viewModelScope.launch {
             val user = MyApplication.db.RememberedUserDAO().getUser(0)
@@ -153,6 +155,7 @@ class UserViewModel : ViewModel() {
             MyApplication.db.RememberedUserDAO().clearRememberedUser()
         }
     }
+
     fun login(email: String, password: String) {
         viewModelScope.launch {
             try {
@@ -376,12 +379,17 @@ class UserViewModel : ViewModel() {
                     status = "Completed",
                     orderId = orderId
                 )
-                transactionsCollection.add(transaksi).await()
+                db.runTransaction { transaction ->
+                    val newBalance = user.balance + amount
+                    transaction.update(userDoc.reference, "balance", newBalance)
+                    val transactionDocRef = transactionsCollection.document(UUID.randomUUID().toString())
+                    transaction.set(transactionDocRef, transaksi)
+                }.await()
                 val newBalance = user.balance + amount
-                usersCollection.document(userDoc.id).update("balance", newBalance).await()
                 _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
                 _balance.postValue(newBalance)
                 _topUpResult.postValue(TopUpResult.Success("Balance update successful"))
+                fetchUser(normalizedEmail)
                 Log.d("UserViewModel", "Top-up completed: orderId=$orderId, newBalance=$newBalance")
             } catch (e: Exception) {
                 _topUpResult.postValue(TopUpResult.Failure("Balance update failed: ${e.message}"))
@@ -428,10 +436,6 @@ class UserViewModel : ViewModel() {
                 )
 
                 val newBalance = user.balance - amount
-                db.runTransaction { transaction ->
-                    transaction.update(userDoc.reference, "balance", newBalance)
-                }.await()
-
                 val transaksi = Transaksi(
                     userEmail = normalizedEmail,
                     type = "QRIS Payment",
@@ -441,11 +445,17 @@ class UserViewModel : ViewModel() {
                     status = "Completed",
                     orderId = orderId
                 )
-                logTransaction(transaksi)
+                db.runTransaction { transaction ->
+                    transaction.update(userDoc.reference, "balance", newBalance)
+                    val transactionDocRef = transactionsCollection.document(UUID.randomUUID().toString())
+                    transaction.set(transactionDocRef, transaksi)
+                }.await()
+
                 simulatedOrders.add(orderId)
                 _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
                 _balance.postValue(newBalance)
                 _paymentResult.postValue(PaymentResult.Success(amount))
+                fetchUser(normalizedEmail)
                 Log.d("UserViewModel", "QRIS payment completed: orderId=$orderId, newBalance=$newBalance")
             } catch (e: Exception) {
                 _paymentResult.postValue(PaymentResult.Failure("Payment failed: ${e.message}"))
@@ -478,11 +488,6 @@ class UserViewModel : ViewModel() {
                     throw IllegalArgumentException("Insufficient balance")
                 }
 
-                db.runTransaction { transaction ->
-                    transaction.update(fromDoc.reference, "balance", sender.balance - amount)
-                    transaction.update(toDoc.reference, "balance", recipient.balance + amount)
-                }.await()
-
                 val transaksi = Transaksi(
                     userEmail = fromEmail.lowercase(),
                     type = "Transfer",
@@ -491,7 +496,13 @@ class UserViewModel : ViewModel() {
                     timestamp = com.google.firebase.Timestamp.now(),
                     status = "Completed"
                 )
-                logTransaction(transaksi)
+
+                db.runTransaction { transaction ->
+                    transaction.update(fromDoc.reference, "balance", sender.balance - amount)
+                    transaction.update(toDoc.reference, "balance", recipient.balance + amount)
+                    val transactionDocRef = transactionsCollection.document(UUID.randomUUID().toString())
+                    transaction.set(transactionDocRef, transaksi)
+                }.await()
 
                 fetchUser(fromEmail.lowercase())
                 Log.d(
@@ -529,10 +540,6 @@ class UserViewModel : ViewModel() {
                     throw IllegalArgumentException("Insufficient balance")
                 }
 
-                db.runTransaction { transaction ->
-                    transaction.update(userDoc.reference, "balance", user.balance - amount)
-                }.await()
-
                 val transaksi = Transaksi(
                     userEmail = userEmail.lowercase(),
                     type = "Bank Transfer",
@@ -541,7 +548,12 @@ class UserViewModel : ViewModel() {
                     timestamp = com.google.firebase.Timestamp.now(),
                     status = "Completed"
                 )
-                logTransaction(transaksi)
+
+                db.runTransaction { transaction ->
+                    transaction.update(userDoc.reference, "balance", user.balance - amount)
+                    val transactionDocRef = transactionsCollection.document(UUID.randomUUID().toString())
+                    transaction.set(transactionDocRef, transaksi)
+                }.await()
 
                 fetchUser(userEmail.lowercase())
                 Log.d(
@@ -557,12 +569,13 @@ class UserViewModel : ViewModel() {
     }
 
     suspend fun logTransaction(transaksi: Transaksi) {
-        val normalizedTransaksi = transaksi.copy(userEmail = transaksi.userEmail.lowercase())
+        val normalizedTransaction = transaksi.copy(userEmail = transaksi.userEmail.lowercase())
         try {
-            transactionsCollection.add(normalizedTransaksi).await()
-            Log.d("UserViewModel", "Transaction logged: $normalizedTransaksi")
+            val docRef = transactionsCollection.document(UUID.randomUUID().toString())
+            docRef.set(normalizedTransaction).await()
+            Log.d("UserViewModel", "Transaction logged: ${docRef.id}, $normalizedTransaction")
         } catch (e: Exception) {
-            Log.e("UserViewModel", "Failed to log transaction: ${e.message}", e)
+            Log.e("UserViewModel", "Failed to log transaction for email=${normalizedTransaction.userEmail}: ${e.message}", e)
             throw e
         }
     }
@@ -571,7 +584,7 @@ class UserViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val snapshot = premiumCollection.whereEqualTo("userEmail", email.lowercase()).get().await()
-                if (!snapshot.isEmpty) {
+                if (!snapshot.isEmpty()) {
                     val docId = snapshot.documents[0].id
                     premiumCollection.document(docId).update("premium", true).await()
                     fetchPremiumStatus(email.lowercase())
@@ -676,8 +689,8 @@ class UserViewModel : ViewModel() {
     fun createOrUpdateDeposit(email: String, amount: Double, tenorMonths: Int, isReinvest: Boolean, orderId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (amount < 5_000_000) {
-                    _depositResult.postValue(DepositResult.Failure("Minimum deposit is Rp5,000,000"))
+                if (amount < 100_000) {
+                    _depositResult.postValue(DepositResult.Failure("Minimum deposit is Rp100,000"))
                     Log.e("UserViewModel", "Invalid deposit amount: $amount, orderId=$orderId")
                     return@launch
                 }
@@ -707,11 +720,6 @@ class UserViewModel : ViewModel() {
                     .get()
                     .await()
 
-                val newBalance = user.balance - amount
-                db.runTransaction { transaction ->
-                    transaction.update(userDoc.reference, "balance", newBalance)
-                }.await()
-
                 val transaksi = Transaksi(
                     userEmail = normalizedEmail,
                     type = "Deposito",
@@ -721,13 +729,19 @@ class UserViewModel : ViewModel() {
                     status = "Completed",
                     orderId = orderId
                 )
-                logTransaction(transaksi)
+
+                val newBalance = user.balance - amount
+                db.runTransaction { transaction ->
+                    transaction.update(userDoc.reference, "balance", newBalance)
+                    val transactionDocRef = transactionsCollection.document(UUID.randomUUID().toString())
+                    transaction.set(transactionDocRef, transaksi)
+                }.await()
 
                 val startDate = com.google.firebase.Timestamp.now()
                 val calendar = Calendar.getInstance()
                 calendar.time = startDate.toDate()
                 calendar.add(Calendar.DAY_OF_MONTH, 30)
-                val nextInterestDate = com.google.firebase.Timestamp(calendar.time)
+                val nextInterestDate = com.google.firebase.Timestamp.now()
 
                 if (depositSnapshot.isEmpty) {
                     val totalAmount = amount
@@ -779,6 +793,7 @@ class UserViewModel : ViewModel() {
                 _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
                 _balance.postValue(newBalance)
                 _depositResult.postValue(DepositResult.Success("Deposit created/updated successfully"))
+                fetchUser(normalizedEmail) // Force refresh
                 Log.d("UserViewModel", "Deposito processed: orderId=$orderId, newBalance=$newBalance")
             } catch (e: Exception) {
                 _depositResult.postValue(DepositResult.Failure("Deposit processing failed: ${e.message}"))
@@ -805,54 +820,90 @@ class UserViewModel : ViewModel() {
                 val userDoc = userSnapshot.documents[0]
                 val user = userDoc.toObject(User::class.java) ?: return@launch
 
-                val monthlyInterest = deposit.amount * (deposit.interestRate / 100) / 12
-                Log.d("UserViewModel", "Processing interest for depositId=$depositId, monthlyInterest=$monthlyInterest, isReinvest=${deposit.isReinvest}")
+                val calendar = Calendar.getInstance().apply { time = deposit.startDate.toDate() }
+                calendar.add(Calendar.MONTH, deposit.tenorMonths)
+                val maturityDate = Timestamp(calendar.time)
+                val today = Timestamp.now()
 
-                if (deposit.isReinvest) {
-                    val newAmount = deposit.amount + monthlyInterest
-                    val newInterestRate = when {
-                        newAmount >= 50_000_000 -> 3.0
-                        newAmount >= 20_000_000 -> 2.5
-                        else -> 2.0
-                    }
-                    depositsCollection.document(depositId).update(
-                        mapOf(
-                            "amount" to newAmount,
-                            "interestRate" to newInterestRate
-                        )
-                    ).await()
-                } else {
-                    val newBalance = user.balance + monthlyInterest
-                    db.runTransaction { transaction ->
-                        transaction.update(userDoc.reference, "balance", newBalance)
-                    }.await()
-                    _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
-                    _balance.postValue(newBalance)
+                if (today.seconds >= maturityDate.seconds) {
+                    val totalAmount = deposit.amount
+                    val monthlyInterest = totalAmount * (deposit.interestRate / 100) / 12
+                    val totalInterest = monthlyInterest * deposit.tenorMonths
+                    val finalAmount = totalAmount + totalInterest
+                    val newBalance = user.balance + finalAmount
 
                     val transaksi = Transaksi(
                         userEmail = deposit.userEmail,
-                        type = "Deposit Interest",
+                        type = "Deposit Maturity",
                         recipient = "System",
-                        amount = monthlyInterest,
+                        amount = finalAmount,
                         timestamp = com.google.firebase.Timestamp.now(),
                         status = "Completed",
-                        orderId = "${deposit.orderId}_interest_${System.currentTimeMillis()}"
+                        orderId = "${deposit.orderId}_maturity_${System.currentTimeMillis()}"
                     )
-                    logTransaction(transaksi)
+
+                    db.runTransaction { transaction ->
+                        transaction.update(userDoc.reference, "balance", newBalance)
+                        val transactionDocRef = transactionsCollection.document(UUID.randomUUID().toString())
+                        transaction.set(transactionDocRef, transaksi)
+                        transaction.update(depositSnapshot.reference, "status", "Matured")
+                    }.await()
+
+                    _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
+                    _balance.postValue(newBalance)
+                    Log.d("UserViewModel", "Deposit matured and cashed out: depositId=$depositId, amount=$finalAmount")
+                } else {
+                    val monthlyInterest = deposit.amount * (deposit.interestRate / 100) / 12
+                    Log.d("UserViewModel", "Processing interest for depositId=$depositId, monthlyInterest=$monthlyInterest, isReinvest=${deposit.isReinvest}")
+
+                    if (deposit.isReinvest) {
+                        val newAmount = deposit.amount + monthlyInterest
+                        val newInterestRate = when {
+                            newAmount >= 50_000_000 -> 3.0
+                            newAmount >= 20_000_000 -> 2.5
+                            else -> 2.0
+                        }
+                        depositsCollection.document(depositId).update(
+                            mapOf(
+                                "amount" to newAmount,
+                                "interestRate" to newInterestRate
+                            )
+                        ).await()
+                    } else {
+                        val newBalance = user.balance + monthlyInterest
+                        val transaksi = Transaksi(
+                            userEmail = deposit.userEmail,
+                            type = "Deposit Interest",
+                            recipient = "System",
+                            amount = monthlyInterest,
+                            timestamp = com.google.firebase.Timestamp.now(),
+                            status = "Completed",
+                            orderId = "${deposit.orderId}_interest_${System.currentTimeMillis()}"
+                        )
+                        db.runTransaction { transaction ->
+                            transaction.update(userDoc.reference, "balance", newBalance)
+                            val transactionDocRef = transactionsCollection.document(UUID.randomUUID().toString())
+                            transaction.set(transactionDocRef, transaksi)
+                        }.await()
+                        _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
+                        _balance.postValue(newBalance)
+                    }
+
+                    val calendar = Calendar.getInstance()
+                    calendar.time = deposit.nextInterestDate.toDate()
+                    calendar.add(Calendar.DAY_OF_MONTH, 30)
+                    val newNextInterestDate = com.google.firebase.Timestamp(calendar.time)
+                    depositsCollection.document(depositId).update("nextInterestDate", newNextInterestDate).await()
                 }
 
-                val calendar = Calendar.getInstance()
-                calendar.time = deposit.nextInterestDate.toDate()
-                calendar.add(Calendar.DAY_OF_MONTH, 30)
-                val newNextInterestDate = com.google.firebase.Timestamp(calendar.time)
-                depositsCollection.document(depositId).update("nextInterestDate", newNextInterestDate).await()
-
-                Log.d("UserViewModel", "Interest processed for depositId=$depositId, nextInterestDate=$newNextInterestDate")
+                fetchUser(deposit.userEmail)
             } catch (e: Exception) {
                 Log.e("UserViewModel", "Error processing interest for depositId=$depositId: ${e.message}", e)
             }
         }
     }
+
+
 
     fun clearUpdatePremiumError() {
         _updatePremiumError.postValue(null)
