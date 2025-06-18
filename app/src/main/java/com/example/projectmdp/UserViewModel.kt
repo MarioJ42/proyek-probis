@@ -269,7 +269,8 @@ class UserViewModel : ViewModel() {
                     pin = pin,
                     role = 0,
                     status = "active",
-                    balance = 0.0
+                    balance = 0.0,
+                    phone = phone
                 )
                 val docRef = usersCollection.add(user).await()
                 Log.d(
@@ -464,13 +465,18 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    fun transfer(fromEmail: String, toEmail: String, amount: Double, onResult: (String?) -> Unit) {
-        Log.d("UserViewModel", "Starting transfer: from=$fromEmail, to=$toEmail, amount=$amount")
+    fun transfer(fromEmail: String, toIdentifier: String, amount: Double, identifierType: String, onResult: (String?) -> Unit) {
+        Log.d("UserViewModel", "Starting transfer: from=$fromEmail, to=$toIdentifier, amount=$amount, type=$identifierType")
         viewModelScope.launch {
             try {
-                val fromSnapshot = usersCollection.whereEqualTo("email", fromEmail.lowercase()).get().await()
-                val toSnapshot = usersCollection.whereEqualTo("email", toEmail.lowercase()).get().await()
+                val query = when (identifierType) {
+                    "Email" -> usersCollection.whereEqualTo("email", toIdentifier.lowercase())
+                    "Phone Number" -> usersCollection.whereEqualTo("phone", toIdentifier)
+                    else -> throw IllegalArgumentException("Invalid identifier type")
+                }
+                val toSnapshot = query.get().await()
 
+                val fromSnapshot = usersCollection.whereEqualTo("email", fromEmail.lowercase()).get().await()
                 if (fromSnapshot.isEmpty || toSnapshot.isEmpty) {
                     throw IllegalArgumentException("Sender or recipient not found")
                 }
@@ -491,7 +497,7 @@ class UserViewModel : ViewModel() {
                 val transaksi = Transaksi(
                     userEmail = fromEmail.lowercase(),
                     type = "Transfer",
-                    recipient = toEmail.lowercase(),
+                    recipient = toIdentifier.lowercase(),
                     amount = amount,
                     timestamp = com.google.firebase.Timestamp.now(),
                     status = "Completed"
@@ -513,7 +519,7 @@ class UserViewModel : ViewModel() {
             } catch (e: Exception) {
                 Log.e(
                     "UserViewModel",
-                    "Transfer failed from $fromEmail to $toEmail: ${e.message}",
+                    "Transfer failed from $fromEmail to $toIdentifier: ${e.message}",
                     e
                 )
                 onResult(e.message)
@@ -902,8 +908,6 @@ class UserViewModel : ViewModel() {
             }
         }
     }
-
-
 
     fun clearUpdatePremiumError() {
         _updatePremiumError.postValue(null)

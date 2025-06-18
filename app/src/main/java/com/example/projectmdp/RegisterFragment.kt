@@ -66,8 +66,8 @@ class RegisterFragment : Fragment() {
                     Toast.makeText(requireContext(), "PIN must be exactly 6 digits.", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
-                phone.isEmpty() || phone.length < 10 || !phone.all { it.isDigit() } -> {
-                    Toast.makeText(requireContext(), "Phone number must be at least 10 digits and contain only numbers.", Toast.LENGTH_SHORT).show()
+                phone.isEmpty() || phone.length != 12 || !phone.all { it.isDigit() } -> {
+                    Toast.makeText(requireContext(), "Phone number must be exactly 12 digits and contain only numbers.", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
             }

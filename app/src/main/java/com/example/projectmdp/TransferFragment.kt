@@ -1,6 +1,8 @@
 package com.example.projectmdp
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -16,6 +18,7 @@ class TransferFragment : Fragment() {
     private var _binding: FragmentTransferBinding? = null
     private val binding get() = _binding!!
     private val viewModel: UserViewModel by viewModels { UserViewModelFactory() }
+    private var recipientType = "Email" // Default to Email
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -46,6 +49,21 @@ class TransferFragment : Fragment() {
         binding.backButton.setOnClickListener {
             findNavController().popBackStack()
         }
+
+        // Setup recipient type selection
+        val recipientTypes = arrayOf("Email", "Phone Number")
+        val recipientTypeAdapter = ArrayAdapter(requireContext(), R.layout.dropdown_menu_item, recipientTypes)
+        binding.recipientTypeAutoCompleteTextView.setAdapter(recipientTypeAdapter)
+        binding.recipientTypeAutoCompleteTextView.setText(recipientTypes[0], false)
+        binding.recipientTypeAutoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
+            recipientType = recipientTypes[position]
+            updateRecipientPlaceholder()
+        }
+        updateRecipientPlaceholder()
+    }
+
+    private fun updateRecipientPlaceholder() {
+        binding.recipientEmail.hint = if (recipientType == "Email") "Enter recipient email" else "Enter recipient phone number"
     }
 
     private fun setupTransferOptions(isPremium: Boolean, userEmail: String) {
@@ -62,6 +80,7 @@ class TransferFragment : Fragment() {
                         binding.toUserFormCard.visibility = View.VISIBLE
                         binding.bankTransferFormCard.visibility = View.GONE
                         Log.d("TransferFragment", "Selected: To User")
+                        setupAmountFormatting(binding.amount)
                     }
                     "Bank Transfer" -> {
                         binding.toUserFormCard.visibility = View.GONE
@@ -86,11 +105,13 @@ class TransferFragment : Fragment() {
                                 Log.d("TransferFragment", "No bank accounts, dropdown cleared")
                             }
                         }
+                        setupAmountFormatting(binding.bankAmount)
                     }
                     else -> {
                         binding.toUserFormCard.visibility = View.VISIBLE
                         binding.bankTransferFormCard.visibility = View.GONE
                         Log.d("TransferFragment", "Default: To User (unexpected selection)")
+                        setupAmountFormatting(binding.amount)
                     }
                 }
             }
@@ -98,12 +119,14 @@ class TransferFragment : Fragment() {
             binding.transferTypeAutoCompleteTextView.setText(transferTypes[0], false)
             binding.toUserFormCard.visibility = View.VISIBLE
             binding.bankTransferFormCard.visibility = View.GONE
+            setupAmountFormatting(binding.amount)
 
         } else {
             binding.transferTypeDropdown.visibility = View.GONE
             binding.toUserFormCard.visibility = View.VISIBLE
             binding.bankTransferFormCard.visibility = View.GONE
             Log.d("TransferFragment", "Non-premium user, showing To User form only")
+            setupAmountFormatting(binding.amount)
         }
 
         binding.addBankAccountButton.setOnClickListener {
@@ -132,7 +155,7 @@ class TransferFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            val amount = binding.bankAmount.text.toString().toDoubleOrNull() ?: 0.0
+            val amount = binding.bankAmount.text.toString().replace("[.]".toRegex(), "").toDoubleOrNull() ?: 0.0
             if (amount <= 0) {
                 Toast.makeText(context, "Please fill the amount", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -149,22 +172,48 @@ class TransferFragment : Fragment() {
         }
 
         binding.transferButton.setOnClickListener {
-            val recipientEmail = binding.recipientEmail.text.toString().trim()
-            val amount = binding.amount.text.toString().toDoubleOrNull() ?: 0.0
-            if (recipientEmail.isEmpty() || amount <= 0) {
+            val recipient = binding.recipientEmail.text.toString().trim()
+            val amount = binding.amount.text.toString().replace("[.]".toRegex(), "").toDoubleOrNull() ?: 0.0
+            if (recipient.isEmpty() || amount <= 0) {
                 Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             val bundle = Bundle().apply {
                 putString("userEmail", userEmail)
-                putString("recipient", recipientEmail)
+                putString("recipient", recipient)
+                putString("recipientType", recipientType)
                 putFloat("amount", amount.toFloat())
                 putString("transferType", "toUser")
             }
             findNavController().navigate(R.id.action_transferFragment_to_pinVerificationFragment, bundle)
-            Log.d("TransferFragment", "To User Transfer initiated: recipient=$recipientEmail, amount=$amount")
+            Log.d("TransferFragment", "To User Transfer initiated: recipient=$recipient, type=$recipientType, amount=$amount")
         }
+    }
+
+    private fun setupAmountFormatting(editText: com.google.android.material.textfield.TextInputEditText) {
+        editText.addTextChangedListener(object : TextWatcher {
+            private var isUpdating = false
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                if (isUpdating || s.isNullOrEmpty()) return
+
+                isUpdating = true
+                val originalString = s.toString().replace("[.]".toRegex(), "")
+                if (originalString.isNotEmpty()) {
+                    val amount = originalString.toLongOrNull() ?: 0L
+                    val formattedAmount = amount.toString().reversed().chunked(3)
+                        .joinToString(".").reversed()
+                    editText.setText(formattedAmount)
+                    editText.setSelection(formattedAmount.length)
+                }
+                isUpdating = false
+            }
+        })
     }
 
     override fun onDestroyView() {

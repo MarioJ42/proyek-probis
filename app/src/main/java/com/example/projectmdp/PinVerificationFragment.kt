@@ -51,8 +51,9 @@ class PinVerificationFragment : Fragment() {
         val transferType = arguments?.getString("transferType")
         val orderId = arguments?.getString("orderId")
         val qrString = arguments?.getString("qrString")
+        val recipientType = arguments?.getString("recipientType") ?: "Email" // Default to Email if not provided
 
-        Log.d("PinVerification", "Received arguments: userEmail=$userEmail, amount=$amount, orderId=$orderId, transferType=$transferType")
+        Log.d("PinVerification", "Received arguments: userEmail=$userEmail, amount=$amount, orderId=$orderId, transferType=$transferType, recipientType=$recipientType")
     }
 
     private fun setupKeypad() {
@@ -103,6 +104,7 @@ class PinVerificationFragment : Fragment() {
         val transferType = arguments?.getString("transferType")
         val orderId = arguments?.getString("orderId")
         val qrString = arguments?.getString("qrString")
+        val recipientType = arguments?.getString("recipientType") ?: "Email" // Default to Email if not provided
 
         viewModel.fetchUser(userEmail)
         viewModel.user.observe(viewLifecycleOwner) { user ->
@@ -144,7 +146,7 @@ class PinVerificationFragment : Fragment() {
                 when (transferType) {
                     "toUser" -> {
                         if (recipient != null) {
-                            viewModel.transfer(userEmail, recipient, amount.toDouble()) { errorMessage ->
+                            viewModel.transfer(userEmail, recipient, amount.toDouble(), recipientType) { errorMessage ->
                                 handleTransferResult(errorMessage, userEmail)
                             }
                         } else {

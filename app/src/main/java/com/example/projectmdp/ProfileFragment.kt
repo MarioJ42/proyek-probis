@@ -6,10 +6,13 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
@@ -52,7 +55,7 @@ class ProfileFragment : Fragment() {
             result.data?.data?.let { uri ->
                 selectedImageUri = uri
                 Log.d("ProfileFragment", "Image selected: $uri")
-                binding.imageViewProfile.setImageURI(uri) // Menggunakan ID baru
+                binding.imageViewProfile.setImageURI(uri)
                 viewLifecycleOwner.lifecycleScope.launch {
                     try {
                         withContext(Dispatchers.Main) { binding.loadingProgressBar.visibility = View.VISIBLE }
@@ -96,7 +99,6 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
         viewModel.user.observe(viewLifecycleOwner, { user ->
             if (user != null) {
                 Log.d("ProfileFragment", "User data received: email=${user.email}, phone=${user.phone}, photoUrl=${user.photoUrl}")
@@ -127,6 +129,15 @@ class ProfileFragment : Fragment() {
             }
         }
 
+        // Phone number formatting and validation
+        binding.etPhone.addTextWatcher {
+            val digitsOnly = it.replace(Regex("[^0-9]"), "")
+            if (digitsOnly.length > 12) {
+                binding.etPhone.setText(digitsOnly.substring(0, 12))
+                binding.etPhone.setSelection(12)
+            }
+        }
+
         // Save Profile Button
         binding.btnSaveProfile.setOnClickListener {
             val newFullName = binding.etFullName.text.toString().trim()
@@ -138,6 +149,13 @@ class ProfileFragment : Fragment() {
             if (newFullName.isEmpty() || newEmail.isEmpty() || newPhone.isEmpty()) {
                 Log.w("ProfileFragment", "Validation failed: Empty fields")
                 Toast.makeText(requireContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val phoneDigits = newPhone.replace(Regex("[^0-9]"), "")
+            if (phoneDigits.length != 12) {
+                Log.w("ProfileFragment", "Validation failed: Phone must be exactly 12 digits")
+                Toast.makeText(requireContext(), "Phone number must be exactly 12 digits", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -209,7 +227,7 @@ class ProfileFragment : Fragment() {
                 val photoUrl = response.data.link
                 Log.d("ProfileFragment", "Image uploaded successfully, URL: $photoUrl")
                 userEmail?.let { email ->
-                    viewModel.updateUserProfile(email, binding.etFullName.text.toString(), binding.etEmail.text.toString(), photoUrl, binding.etPhone.text.toString()) // Menggunakan ID baru
+                    viewModel.updateUserProfile(email, binding.etFullName.text.toString(), binding.etEmail.text.toString(), photoUrl, binding.etPhone.text.toString())
                     withContext(Dispatchers.Main) {
                         Toast.makeText(context, "Photo uploaded to Imgur", Toast.LENGTH_SHORT).show()
                         Glide.with(binding.imageViewProfile)
@@ -237,4 +255,14 @@ class ProfileFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+}
+
+private fun EditText.addTextWatcher(block: (String) -> Unit) {
+    this.addTextChangedListener(object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        override fun afterTextChanged(s: Editable?) {
+            block(s.toString())
+        }
+    })
 }
