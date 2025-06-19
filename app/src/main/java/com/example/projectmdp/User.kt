@@ -13,5 +13,7 @@ data class User(
     @PropertyName("role") val role: Int = 0, // 0 = regular user, 1 = admin
     @PropertyName("status") val status: String = "active", // Default status
     @PropertyName("phone") val phone: String = "",
-    @PropertyName("photoUrl") val photoUrl: String = ""
+    @PropertyName("photoUrl") val photoUrl: String = "",
+    @PropertyName("referralCode") val referralCode: String? = null,
+    @PropertyName("redeemedReferralCode") val redeemedReferralCode: String? = null
 )

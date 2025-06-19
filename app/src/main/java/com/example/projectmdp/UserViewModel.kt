@@ -60,6 +60,7 @@ class UserViewModel : ViewModel() {
     private val qrisPaymentsCollection = db.collection("qris_payments")
     private val depositsCollection = db.collection("deposits")
     private val bankAccountsCollection = db.collection("bank_accounts")
+    private val referralCodesCollection = db.collection("referralCodes")
     private val simulatedOrders = mutableSetOf<String>()
 
     private val _user = MutableLiveData<User?>()
@@ -95,8 +96,15 @@ class UserViewModel : ViewModel() {
     private val _bankAccounts = MutableLiveData<List<BankAccount>>()
     val bankAccounts: LiveData<List<BankAccount>> get() = _bankAccounts
 
+    private val _registrationResult = MutableLiveData<Result<String>?>()
+    val registrationResult: LiveData<Result<String>?> get() = _registrationResult
+
     init {
         createAdminUser()
+    }
+
+    fun clearRegistrationResult() {
+        _registrationResult.value = null
     }
 
     fun setUserEmail(email: String) {
@@ -251,40 +259,113 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    fun register(email: String, fullName: String, password: String, pin: String, phone: String) {
+    fun register(email: String, fullName: String, password: String, pin: String, phone: String, referralCode: String) {
         viewModelScope.launch {
             try {
                 val normalizedEmail = email.lowercase()
                 val snapshot = usersCollection.whereEqualTo("email", normalizedEmail).get().await()
                 if (!snapshot.isEmpty) {
-                    Log.d("UserViewModel", "Email already exists: $normalizedEmail")
-                    _loginResult.postValue(false)
+                    // Kasus email sudah ada, ini adalah 'kegagalan' yang terkendali
+                    Log.w("UserViewModel", "Registration failed: Email already exists.")
+                    _loginResult.postValue(false) // Kirim 'false'
                     return@launch
                 }
-                val user = User(
-                    id = "",
-                    fullName = fullName,
-                    email = normalizedEmail,
-                    password = password,
-                    pin = pin,
-                    role = 0,
-                    status = "active",
-                    balance = 0.0,
-                    phone = phone
-                )
-                val docRef = usersCollection.add(user).await()
-                Log.d(
-                    "UserViewModel",
-                    "User registered: $normalizedEmail, document ID: ${docRef.id}"
-                )
-                _loginResult.postValue(true)
-                _userEmail.postValue(normalizedEmail)
-                fetchUser(normalizedEmail)
+
+                // Cek apakah kode referral diisi atau tidak
+                if (referralCode.isNotBlank()) {
+                    // Alur dengan referral
+                    performRegistrationWithReward(fullName, normalizedEmail, password, pin, phone, referralCode)
+                } else {
+                    // Alur normal tanpa referral
+                    performNormalRegistration(fullName, normalizedEmail, password, pin, phone)
+                }
             } catch (e: Exception) {
-                Log.e("UserViewModel", "Registration error for email=$email: ${e.message}", e)
-                _loginResult.postValue(null)
+                // Ini adalah blok penangkap SEMUA error lainnya (masalah jaringan, aturan firebase, dll)
+                Log.e("UserViewModel", "An unexpected error occurred during registration: ${e.message}", e)
+                _loginResult.postValue(null) // Kirim 'null' untuk error tak terduga
             }
         }
+    }
+
+    /**
+     * GANTI FUNGSI PRIVATE LAMA ANDA DENGAN INI
+     */
+    private suspend fun performNormalRegistration(fullName: String, email: String, password: String, pin: String, phone: String) {
+        // try-catch di dalam sini untuk menangani kegagalan spesifik pada proses ini
+        try {
+            val uniqueCode = generateUniqueReferralCode()
+            val userDocRef = usersCollection.document()
+            val user = User(
+                id = userDocRef.id,
+                fullName = fullName, email = email, password = password, pin = pin, phone = phone,
+                referralCode = uniqueCode
+            )
+            val referralCodeRef = db.collection("referralCodes").document(uniqueCode)
+            db.runBatch { batch ->
+                batch.set(userDocRef, user)
+                batch.set(referralCodeRef, mapOf("userId" to userDocRef.id))
+            }.await()
+            Log.d("UserViewModel", "Normal registration successful for $email")
+            _loginResult.postValue(true)
+        } catch (e: Exception) {
+            Log.e("UserViewModel", "Error in performNormalRegistration: ${e.message}", e)
+            _loginResult.postValue(null) // Pastikan melaporkan kegagalan
+        }
+    }
+
+    /**
+     * GANTI FUNGSI PRIVATE LAMA ANDA DENGAN INI
+     */
+    private suspend fun performRegistrationWithReward(fullName: String, email: String, password: String, pin: String, phone: String, redeemedCode: String) {
+        // try-catch di dalam sini untuk menangani kegagalan spesifik pada proses ini
+        try {
+            val referrerCodeDoc = db.collection("referralCodes").document(redeemedCode).get().await()
+            val referrerId = referrerCodeDoc.getString("userId")
+
+            if (referrerCodeDoc.exists() && referrerId != null) {
+                val newUniqueCode = generateUniqueReferralCode()
+                db.runTransaction { transaction ->
+                    val referrerRef = usersCollection.document(referrerId)
+                    val referrerSnapshot = transaction.get(referrerRef)
+                    val currentBalance = referrerSnapshot.getDouble("balance") ?: 0.0
+                    transaction.update(referrerRef, "balance", currentBalance + 10000.0)
+
+                    val newUserRef = usersCollection.document()
+                    val referralCodeRef = db.collection("referralCodes").document(newUniqueCode)
+                    val newUser = User(
+                        id = newUserRef.id,
+                        fullName = fullName, email = email, password = password, pin = pin, phone = phone,
+                        referralCode = newUniqueCode,
+                        redeemedReferralCode = redeemedCode
+                    )
+                    transaction.set(newUserRef, newUser)
+                    transaction.set(referralCodeRef, mapOf("userId" to newUserRef.id))
+                }.await()
+                Log.d("UserViewModel", "Registration with referral successful for $email")
+                _loginResult.postValue(true)
+            } else {
+                // Jika kode referral ternyata tidak valid, daftarkan secara normal.
+                Log.w("UserViewModel", "Invalid referral code '$redeemedCode'. Proceeding with normal registration.")
+                performNormalRegistration(fullName, email, password, pin, phone)
+            }
+        } catch (e: Exception) {
+            Log.e("UserViewModel", "Error in performRegistrationWithReward: ${e.message}", e)
+            _loginResult.postValue(null) // Pastikan melaporkan kegagalan
+        }
+    }
+
+    // Fungsi helper ini tidak perlu diubah, biarkan seperti adanya
+    private suspend fun generateUniqueReferralCode(): String {
+        val referralCodesCollection = db.collection("referralCodes")
+        val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        var newCode: String
+        var isUnique: Boolean
+        do {
+            newCode = (1..6).map { chars.random() }.joinToString("")
+            val doc = referralCodesCollection.document(newCode).get().await()
+            isUnique = !doc.exists()
+        } while (!isUnique)
+        return newCode
     }
 
     fun updateUserProfile(email: String, fullName: String, newEmail: String, photoUrl: String = "", phone: String = "") {

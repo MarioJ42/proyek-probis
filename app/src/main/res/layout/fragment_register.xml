@@ -129,21 +129,43 @@ android:inputType="phone"
     android:textColorHint="#757575" />
     </com.google.android.material.textfield.TextInputLayout>
 
-<com.google.android.material.button.MaterialButton
-android:id="@+id/btnRegister"
-android:layout_width="0dp"
-android:layout_height="56dp"
-android:layout_marginTop="48dp"
-android:text="Register"
-android:textColor="@android:color/white"
-android:textSize="16sp"
-app:backgroundTint="#6200EA"
-app:cornerRadius="8dp"
-app:layout_constraintEnd_toEndOf="parent"
-app:layout_constraintStart_toStartOf="parent"
-app:layout_constraintTop_toBottomOf="@+id/tilNotelp" />
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilReferralCode"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="Kode Referral (Opsional)"
+            app:boxStrokeColor="#FFFFFF"
+            app:hintTextColor="#FFFFFF"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tilNotelp">
 
-<TextView
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etReferralCode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:textColor="#212121"
+                android:textColorHint="#757575" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRegister"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="96dp"
+            android:text="Register"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            app:backgroundTint="#6200EA"
+            app:cornerRadius="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tilNotelp" />
+
+        <TextView
 android:id="@+id/tvBackToLogin"
 android:layout_width="wrap_content"
 android:layout_height="wrap_content"
