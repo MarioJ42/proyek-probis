@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.projectmdp.data.TransactionDisplayItem
 import com.example.projectmdp.databinding.FragmentHistoryBinding
 import com.google.firebase.firestore.FirebaseFirestore
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import java.util.*
 
 class HistoryFragment : Fragment() {
@@ -20,6 +22,9 @@ class HistoryFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: UserViewModel by viewModels { UserViewModelFactory() }
     private val db = FirebaseFirestore.getInstance()
+    private var allTransactions: List<TransactionDisplayItem> = emptyList()
+    private var selectedType: String = "All"
+    private var selectedDate: String = "All"
 
     private lateinit var transactionAdapter: TransactionAdapter
 
@@ -44,6 +49,23 @@ class HistoryFragment : Fragment() {
 
         setupRecyclerView()
 
+        val typeAdapter = ArrayAdapter.createFromResource(
+            requireContext(),
+            R.array.transaction_types,
+            android.R.layout.simple_spinner_item
+        )
+        typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.typeFilterSpinner.adapter = typeAdapter
+
+        val dateAdapter = ArrayAdapter.createFromResource(
+            requireContext(),
+            R.array.date_filters,
+            android.R.layout.simple_spinner_item
+        )
+        dateAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.dateFilterSpinner.adapter = dateAdapter
+
+
         viewModel.fetchUser(userEmail)
 
         binding.backButton.setOnClickListener {
@@ -51,7 +73,50 @@ class HistoryFragment : Fragment() {
         }
 
         loadTransactionHistory(userEmail)
+
+        binding.typeFilterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                selectedType = parent?.getItemAtPosition(position).toString()
+                applyFilters()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        binding.dateFilterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                selectedDate = parent?.getItemAtPosition(position).toString()
+                applyFilters()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
     }
+
+    private fun applyFilters() {
+        val now = Date()
+        val filteredList = allTransactions.filter { item ->
+            val matchType = selectedType == "All" || item.data.type == selectedType
+
+            val transactionDate = item.data.timestamp?.toDate()
+            val diffMillis = now.time - (transactionDate?.time ?: 0)
+            val diffDays = diffMillis / (1000 * 60 * 60 * 24)
+
+            val matchDate = when (selectedDate) {
+                "All" -> true
+                "< 3 days" -> diffDays < 3
+                "< 7 days" -> diffDays < 7
+                "< 30 days" -> diffDays < 30
+                else -> true
+            }
+
+            matchType && matchDate
+        }
+
+        transactionAdapter.submitList(filteredList)
+    }
+
 
     private fun setupRecyclerView() {
         transactionAdapter = TransactionAdapter()
@@ -80,21 +145,27 @@ class HistoryFragment : Fragment() {
                     Log.d("HistoryFragment", "Fetched transaction item: ${document.id}, ${transaksi.type}")
                 }
 
-                val sortedTransactionItems = transactionDisplayItems.sortedByDescending { it.data.timestamp?.toDate() }
+                allTransactions = transactionDisplayItems.sortedByDescending { it.data.timestamp?.toDate() }
+                applyFilters()
 
-                transactionAdapter.submitList(sortedTransactionItems)
-                Log.d("HistoryFragment", "Submitted ${sortedTransactionItems.size} transaction items to adapter.")
 
-                if (sortedTransactionItems.isEmpty()) {
-                    Log.w("HistoryFragment", "No transactions found for userEmail = $normalizedEmail")
-                    Toast.makeText(context, "No transactions found.", Toast.LENGTH_SHORT).show()
-                }
+//                val sortedTransactionItems = transactionDisplayItems.sortedByDescending { it.data.timestamp?.toDate() }
+//
+//                transactionAdapter.submitList(sortedTransactionItems)
+//                Log.d("HistoryFragment", "Submitted ${sortedTransactionItems.size} transaction items to adapter.")
+//
+//                if (sortedTransactionItems.isEmpty()) {
+//                    Log.w("HistoryFragment", "No transactions found for userEmail = $normalizedEmail")
+//                    Toast.makeText(context, "No transactions found.", Toast.LENGTH_SHORT).show()
+//                }
             }
             .addOnFailureListener { e ->
                 Log.e("HistoryFragment", "Failed to load transactions: ${e.message}", e)
                 Toast.makeText(context, "Failed to load history: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()

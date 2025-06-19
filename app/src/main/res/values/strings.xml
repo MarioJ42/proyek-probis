@@ -15,4 +15,21 @@
     <string name="filter_label_time">Filter Time</string>
     <string name="filter_label_type">Type Transaction</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string-array name="transaction_types">
+        <item>All</item>
+        <item>TopUp Saldo</item>
+        <item>Transfer</item>
+        <item>Bank Transfer</item>
+        <item>QRIS Payment</item>
+        <item>Deposito</item>
+    </string-array>
+
+    <string-array name="date_filters">
+        <item>All</item>
+        <item>&lt; 3 days</item>
+        <item>&lt; 7 days</item>
+        <item>&lt; 30 days</item>
+    </string-array>
+
 </resources>
