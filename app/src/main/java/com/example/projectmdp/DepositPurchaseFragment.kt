@@ -107,14 +107,10 @@ class DepositPurchaseFragment : Fragment() {
             }
             val isTestTenor = selectedTenorString == "Test (15 detik)"
 
-            val interestRate = if (isTestTenor) {
-                100.0
-            } else {
-                when {
-                    amount >= 50_000_000 -> 3.0
-                    amount >= 20_000_000 -> 2.5
-                    else -> 2.0
-                }
+            val interestRate = when {
+                amount >= 50_000_000 -> 3.0
+                amount >= 20_000_000 -> 2.5
+                else -> 2.0
             }
             val isReinvest = binding.interestOptionSpinner.selectedItem.toString() == "Putar Kembali Bunga"
 
@@ -140,10 +136,10 @@ class DepositPurchaseFragment : Fragment() {
                 }
                 binding.resultTextView.text = "Suku Bunga: ${interestRate}%\nBunga: ${formatter.format(totalInterest)}\nTotal: ${formatter.format(finalAmount)}"
             } else {
-                val monthlyRateTest = 100.0 / 100 / 12
+                val monthlyRateTest = interestRate / 100 / 12
                 val monthlyInterestTest = amount * monthlyRateTest
                 val finalAmountTest = amount + monthlyInterestTest
-                binding.resultTextView.text = "Tenor Test (15 detik)\nSuku Bunga: 100.0%\nBunga Estimasi (1 bulan): ${formatter.format(monthlyInterestTest)}\nTotal Estimasi (1 bulan): ${formatter.format(finalAmountTest)}"
+                binding.resultTextView.text = "Tenor Test (15 detik)\nSuku Bunga: ${interestRate}%\nBunga Estimasi (1 bulan): ${formatter.format(monthlyInterestTest)}\nTotal Estimasi (1 bulan): ${formatter.format(finalAmountTest)}"
             }
         }
 
@@ -199,21 +195,17 @@ class DepositPurchaseFragment : Fragment() {
                             return@launch
                         }
 
-                        val interestRateForDeposit = if (isTestTenor) {
-                            100.0
-                        } else {
-                            when {
-                                amount >= 50_000_000 -> 3.0
-                                amount >= 20_000_000 -> 2.5
-                                else -> 2.0
-                            }
+                        val interestRateForDeposit = when {
+                            amount >= 50_000_000 -> 3.0
+                            amount >= 20_000_000 -> 2.5
+                            else -> 2.0
                         }
 
                         viewModel.createOrUpdateDeposit(userEmail, amount, tenor, isReinvest, orderId, interestRateForDeposit)
 
                         if (isTestTenor) {
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(context, "Deposito test dibuat. Akan cair dalam 15 detik dengan bunga 100%.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "Deposito test dibuat. Akan cair dalam 15 detik dengan bunga biasa.", Toast.LENGTH_LONG).show()
                             }
                             launch {
                                 kotlinx.coroutines.delay(15000L)
@@ -229,6 +221,7 @@ class DepositPurchaseFragment : Fragment() {
                                     val testDeposit = testDepositDoc.toObject(Deposit::class.java)
                                     if (testDeposit != null) {
                                         Log.d("DepositPurchaseFragment", "Processing test deposit maturity for ${testDepositDoc.id}")
+
                                         viewModel.processDepositInterest(testDepositDoc.id)
                                         withContext(Dispatchers.Main) {
                                             Toast.makeText(context, "Deposito test telah cair dengan bunga!", Toast.LENGTH_LONG).show()

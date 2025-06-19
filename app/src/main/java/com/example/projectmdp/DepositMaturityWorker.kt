@@ -37,8 +37,8 @@ class DepositMaturityWorker(
                         calendar.add(Calendar.MONTH, deposit.tenorMonths)
                         val maturityDate = com.google.firebase.Timestamp(calendar.time)
 
-                        if (today.seconds >= maturityDate.seconds) {
-                            Log.d("DepositMaturityWorker", "Deposit matured: depositId=${document.id}")
+                        if (today.seconds >= maturityDate.seconds || deposit.tenorMonths == 0) {
+                            Log.d("DepositMaturityWorker", "Deposit matured: depositId=${document.id}, tenorMonths=${deposit.tenorMonths}")
                             processDepositMaturity(document.id, deposit)
                         } else if (today.seconds >= deposit.nextInterestDate.seconds) {
                             Log.d("DepositMaturityWorker", "Processing interest for depositId=${document.id}")
@@ -66,17 +66,34 @@ class DepositMaturityWorker(
             val userDoc = userSnapshot.documents[0]
             val user = userDoc.toObject(User::class.java) ?: return
 
-            val totalAmount = deposit.amount
-            val monthlyInterest = totalAmount * (deposit.interestRate / 100) / 12
-            val totalInterest = monthlyInterest * deposit.tenorMonths
-            val finalAmount = totalAmount + totalInterest
-            val newBalance = user.balance + finalAmount
+            val totalAmountInvested = deposit.amount
+            val monthlyInterestRate = deposit.interestRate / 100 / 12
+
+            val calculatedInterest = if (deposit.tenorMonths == 0) {
+                totalAmountInvested * monthlyInterestRate
+            } else {
+                if (deposit.isReinvest) {
+                    var currentPrincipal = totalAmountInvested
+                    var accumulatedInterest = 0.0
+                    for (i in 1..deposit.tenorMonths) {
+                        val interest = currentPrincipal * monthlyInterestRate
+                        accumulatedInterest += interest
+                        currentPrincipal += interest
+                    }
+                    accumulatedInterest
+                } else {
+                    totalAmountInvested * monthlyInterestRate * deposit.tenorMonths
+                }
+            }
+
+            val finalAmountToReturn = totalAmountInvested + calculatedInterest
+            val newBalance = user.balance + finalAmountToReturn
 
             val transaksi = Transaksi(
                 userEmail = deposit.userEmail,
                 type = "Deposit Maturity",
                 recipient = "System",
-                amount = finalAmount,
+                amount = finalAmountToReturn,
                 timestamp = com.google.firebase.Timestamp.now(),
                 status = "Completed",
                 orderId = "${deposit.orderId}_maturity_${System.currentTimeMillis()}"
@@ -89,7 +106,7 @@ class DepositMaturityWorker(
                 transaction.update(depositsCollection.document(depositId), "status", "Matured")
             }.await()
 
-            Log.d("DepositMaturityWorker", "Deposit matured and cashed out: depositId=$depositId, amount=$finalAmount")
+            Log.d("DepositMaturityWorker", "Deposit matured and cashed out: depositId=$depositId, amount=$finalAmountToReturn")
         } catch (e: Exception) {
             Log.e("DepositMaturityWorker", "Error processing maturity for depositId=$depositId: ${e.message}", e)
         }

@@ -744,10 +744,14 @@ class UserViewModel : ViewModel() {
                 }.await()
 
                 val startDate = com.google.firebase.Timestamp.now()
-                val calendar = Calendar.getInstance()
-                calendar.time = startDate.toDate()
-                calendar.add(Calendar.DAY_OF_MONTH, 30)
-                val nextInterestDate = com.google.firebase.Timestamp.now()
+                val nextInterestDate = if (tenorMonths == 0) {
+                    com.google.firebase.Timestamp.now()
+                } else {
+                    val calendar = Calendar.getInstance()
+                    calendar.time = startDate.toDate()
+                    calendar.add(Calendar.DAY_OF_MONTH, 30)
+                    com.google.firebase.Timestamp(calendar.time)
+                }
 
                 val calculatedInterestRate = customInterestRate ?: when {
                     amount >= 50_000_000 -> 3.0
@@ -768,7 +772,7 @@ class UserViewModel : ViewModel() {
                         orderId = orderId
                     )
                     depositsCollection.add(deposit).await()
-                    Log.d("UserViewModel", "New deposit created: orderId=$orderId, amount=$amount, interestRate=$calculatedInterestRate")
+                    Log.d("UserViewModel", "New deposit created: orderId=$orderId, amount=$amount, interestRate=$calculatedInterestRate, tenorMonths=$tenorMonths")
                 } else {
                     val depositDoc = depositSnapshot.documents[0]
                     val existingDeposit = depositDoc.toObject(Deposit::class.java)
@@ -789,10 +793,11 @@ class UserViewModel : ViewModel() {
                         "interestRate" to newInterestRate,
                         "isReinvest" to isReinvest,
                         "nextInterestDate" to nextInterestDate,
-                        "orderId" to orderId
+                        "orderId" to orderId,
+                        "tenorMonths" to tenorMonths
                     )
                     depositsCollection.document(depositDoc.id).update(updates).await()
-                    Log.d("UserViewModel", "Deposit updated: orderId=$orderId, totalAmount=$totalAmount, newInterestRate=$newInterestRate")
+                    Log.d("UserViewModel", "Deposit updated: orderId=$orderId, totalAmount=$totalAmount, newInterestRate=$newInterestRate, tenorMonths=$tenorMonths")
                 }
 
                 _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
@@ -830,18 +835,35 @@ class UserViewModel : ViewModel() {
                 val maturityDate = Timestamp(calendar.time)
                 val today = Timestamp.now()
 
-                if (today.seconds >= maturityDate.seconds) {
-                    val totalAmount = deposit.amount
-                    val monthlyInterest = totalAmount * (deposit.interestRate / 100) / 12
-                    val totalInterest = monthlyInterest * deposit.tenorMonths
-                    val finalAmount = totalAmount + totalInterest
-                    val newBalance = user.balance + finalAmount
+                if (today.seconds >= maturityDate.seconds || deposit.tenorMonths == 0) {
+                    val totalAmountInvested = deposit.amount
+                    val monthlyInterestRate = deposit.interestRate / 100 / 12
+
+                    val calculatedInterest = if (deposit.tenorMonths == 0) {
+                        totalAmountInvested * monthlyInterestRate
+                    } else {
+                        if (deposit.isReinvest) {
+                            var currentPrincipal = totalAmountInvested
+                            var accumulatedInterest = 0.0
+                            for (i in 1..deposit.tenorMonths) {
+                                val interest = currentPrincipal * monthlyInterestRate
+                                accumulatedInterest += interest
+                                currentPrincipal += interest
+                            }
+                            accumulatedInterest
+                        } else {
+                            totalAmountInvested * monthlyInterestRate * deposit.tenorMonths
+                        }
+                    }
+
+                    val finalAmountToReturn = totalAmountInvested + calculatedInterest
+                    val newBalance = user.balance + finalAmountToReturn
 
                     val transaksi = Transaksi(
                         userEmail = deposit.userEmail,
                         type = "Deposit Maturity",
                         recipient = "System",
-                        amount = finalAmount,
+                        amount = finalAmountToReturn,
                         timestamp = com.google.firebase.Timestamp.now(),
                         status = "Completed",
                         orderId = "${deposit.orderId}_maturity_${System.currentTimeMillis()}"
@@ -856,7 +878,7 @@ class UserViewModel : ViewModel() {
 
                     _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
                     _balance.postValue(newBalance)
-                    Log.d("UserViewModel", "Deposit matured and cashed out: depositId=$depositId, amount=$finalAmount")
+                    Log.d("UserViewModel", "Deposit matured and cashed out: depositId=$depositId, amount=$finalAmountToReturn")
                 } else {
                     val monthlyInterest = deposit.amount * (deposit.interestRate / 100) / 12
                     Log.d("UserViewModel", "Processing interest for depositId=$deposit.id, monthlyInterest=$monthlyInterest, isReinvest=${deposit.isReinvest}")
