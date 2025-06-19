@@ -47,13 +47,16 @@
         tools:text="Rp 1,231,231.00"
         android:textColor="@color/text_primary"
         android:textSize="12sp"
-        android:maxLines="2"
+        android:maxLines="1"
         android:ellipsize="end"
+        android:singleLine="true"
         android:gravity="end|center_vertical"
         app:layout_constraintStart_toEndOf="@id/recipientText"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintWidth_percent="0.20" />
+
+
 
     <TextView
         android:id="@+id/dateText"
