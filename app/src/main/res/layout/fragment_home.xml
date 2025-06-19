@@ -122,20 +122,21 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/transfer"
                 android:layout_width="0dp"
-                android:layout_height="120dp" android:layout_columnWeight="1"
+                android:layout_height="120dp"
+                android:layout_columnWeight="1"
                 android:layout_margin="8dp"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.0"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
                 android:text="Transfer"
                 android:textColor="@color/white"
+                android:textSize="12sp"
                 app:backgroundTint="@color/button_background"
                 app:cornerRadius="12dp"
                 app:icon="@drawable/ic_transfer"
-                app:iconTint="@color/white"
                 app:iconGravity="textTop"
-                android:paddingTop="16dp"
-                android:paddingBottom="16dp"
-                android:letterSpacing="0.0"
-                android:fontFamily="sans-serif-medium"
-                android:textSize="14sp" />
+                app:iconTint="@color/white" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/history"
@@ -158,20 +159,21 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/investasi"
                 android:layout_width="0dp"
-                android:layout_height="120dp" android:layout_columnWeight="1"
+                android:layout_height="120dp"
+                android:layout_columnWeight="1"
                 android:layout_margin="8dp"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.0"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
                 android:text="Investasi"
                 android:textColor="@color/white"
+                android:textSize="12sp"
                 app:backgroundTint="@color/button_background"
                 app:cornerRadius="12dp"
                 app:icon="@drawable/ic_investasi_tabungan"
-                app:iconTint="@color/white"
                 app:iconGravity="textTop"
-                android:paddingTop="16dp"
-                android:paddingBottom="16dp"
-                android:letterSpacing="0.0"
-                android:fontFamily="sans-serif-medium"
-                android:textSize="14sp" />
+                app:iconTint="@color/white" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/qris"

@@ -1,5 +1,6 @@
 package com.example.projectmdp
 
+import android.app.AlertDialog
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -72,7 +73,18 @@ class UserTableAdapter(
 
             actionButton.setOnClickListener {
                 val newStatus = if (user.status.toLowerCase(Locale.ROOT) == "active") "inactive" else "active"
-                onStatusChange(user, newStatus)
+
+                val dialogTitle = if (newStatus == "active") "activate User" else "deactivate User"
+                val dialogMessage = "Are you sure you want to ${dialogTitle} this user?"
+
+                AlertDialog.Builder(context)
+                    .setTitle(dialogTitle)
+                    .setMessage(dialogMessage)
+                    .setPositiveButton("Yes") { _, _ ->
+                        onStatusChange(user, newStatus)
+                    }
+                    .setNegativeButton("No", null)
+                    .show()
             }
         }
 

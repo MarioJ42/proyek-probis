@@ -57,11 +57,11 @@ class UserDetailPremiumFragment : Fragment() {
             }
             binding.AccBtn.setOnClickListener{
                 viewModel.acceptPremiumRequest(user!!.id, adminEmail)
-                Toast.makeText(context, "Accepting request for ${user.userEmail}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Accepted request for ${user.userEmail}", Toast.LENGTH_SHORT).show()
             }
             binding.Decbtn.setOnClickListener{
                 viewModel.rejectPremiumRequest(user!!.id, adminEmail)
-                Toast.makeText(context, "Rejecting request for ${user.userEmail}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Rejected request for ${user.userEmail}", Toast.LENGTH_SHORT).show()
 
             }
         }
@@ -71,6 +71,9 @@ class UserDetailPremiumFragment : Fragment() {
             if(user!= null){
                 binding.Fullnameet.text = user.fullName
                 binding.Phoneet.text = user.phone
+            }else{
+                binding.Fullnameet.text = "Not Found"
+                binding.Phoneet.text = "Not Found"
             }
         }
         binding.BackBtn.setOnClickListener{
