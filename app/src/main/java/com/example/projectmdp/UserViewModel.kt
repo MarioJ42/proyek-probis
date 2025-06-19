@@ -692,7 +692,7 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    fun createOrUpdateDeposit(email: String, amount: Double, tenorMonths: Int, isReinvest: Boolean, orderId: String) {
+    fun createOrUpdateDeposit(email: String, amount: Double, tenorMonths: Int, isReinvest: Boolean, orderId: String, customInterestRate: Double? = null) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 if (amount < 100_000) {
@@ -749,18 +749,17 @@ class UserViewModel : ViewModel() {
                 calendar.add(Calendar.DAY_OF_MONTH, 30)
                 val nextInterestDate = com.google.firebase.Timestamp.now()
 
-                if (depositSnapshot.isEmpty) {
-                    val totalAmount = amount
-                    val interestRate = when {
-                        totalAmount >= 50_000_000 -> 3.0
-                        totalAmount >= 20_000_000 -> 2.5
-                        else -> 2.0
-                    }
+                val calculatedInterestRate = customInterestRate ?: when {
+                    amount >= 50_000_000 -> 3.0
+                    amount >= 20_000_000 -> 2.5
+                    else -> 2.0
+                }
 
+                if (depositSnapshot.isEmpty) {
                     val deposit = Deposit(
                         userEmail = normalizedEmail,
-                        amount = totalAmount,
-                        interestRate = interestRate,
+                        amount = amount,
+                        interestRate = calculatedInterestRate,
                         tenorMonths = tenorMonths,
                         isReinvest = isReinvest,
                         startDate = startDate,
@@ -769,7 +768,7 @@ class UserViewModel : ViewModel() {
                         orderId = orderId
                     )
                     depositsCollection.add(deposit).await()
-                    Log.d("UserViewModel", "New deposit created: orderId=$orderId, amount=$totalAmount, interestRate=$interestRate")
+                    Log.d("UserViewModel", "New deposit created: orderId=$orderId, amount=$amount, interestRate=$calculatedInterestRate")
                 } else {
                     val depositDoc = depositSnapshot.documents[0]
                     val existingDeposit = depositDoc.toObject(Deposit::class.java)
@@ -779,7 +778,7 @@ class UserViewModel : ViewModel() {
                         return@launch
                     }
                     val totalAmount = existingDeposit.amount + amount
-                    val interestRate = when {
+                    val newInterestRate = customInterestRate ?: when {
                         totalAmount >= 50_000_000 -> 3.0
                         totalAmount >= 20_000_000 -> 2.5
                         else -> 2.0
@@ -787,19 +786,19 @@ class UserViewModel : ViewModel() {
 
                     val updates = mapOf(
                         "amount" to totalAmount,
-                        "interestRate" to interestRate,
+                        "interestRate" to newInterestRate,
                         "isReinvest" to isReinvest,
                         "nextInterestDate" to nextInterestDate,
                         "orderId" to orderId
                     )
                     depositsCollection.document(depositDoc.id).update(updates).await()
-                    Log.d("UserViewModel", "Deposit updated: orderId=$orderId, totalAmount=$totalAmount, newInterestRate=$interestRate")
+                    Log.d("UserViewModel", "Deposit updated: orderId=$orderId, totalAmount=$totalAmount, newInterestRate=$newInterestRate")
                 }
 
                 _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
                 _balance.postValue(newBalance)
                 _depositResult.postValue(DepositResult.Success("Deposit created/updated successfully"))
-                fetchUser(normalizedEmail) // Force refresh
+                fetchUser(normalizedEmail)
                 Log.d("UserViewModel", "Deposito processed: orderId=$orderId, newBalance=$newBalance")
             } catch (e: Exception) {
                 _depositResult.postValue(DepositResult.Failure("Deposit processing failed: ${e.message}"))
@@ -860,7 +859,7 @@ class UserViewModel : ViewModel() {
                     Log.d("UserViewModel", "Deposit matured and cashed out: depositId=$depositId, amount=$finalAmount")
                 } else {
                     val monthlyInterest = deposit.amount * (deposit.interestRate / 100) / 12
-                    Log.d("UserViewModel", "Processing interest for depositId=$depositId, monthlyInterest=$monthlyInterest, isReinvest=${deposit.isReinvest}")
+                    Log.d("UserViewModel", "Processing interest for depositId=$deposit.id, monthlyInterest=$monthlyInterest, isReinvest=${deposit.isReinvest}")
 
                     if (deposit.isReinvest) {
                         val newAmount = deposit.amount + monthlyInterest

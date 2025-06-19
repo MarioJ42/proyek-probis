@@ -2,8 +2,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/gradient_background">
+    android:layout_height="wrap_content"
+    android:background="@drawable/gradient_background"
+    android:paddingBottom="24dp">
+
     <TextView
         android:id="@+id/titleTextView"
         android:layout_width="wrap_content"
@@ -94,151 +96,174 @@
             android:background="@drawable/pin_circle_background" />
     </LinearLayout>
 
-    <!-- Keypad Container -->
     <GridLayout
         android:id="@+id/keypadContainer"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:columnCount="3"
+        android:layout_height="280dp" android:columnCount="3"
         android:rowCount="4"
         app:layout_constraintTop_toBottomOf="@id/pinContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginTop="48dp"
-        android:background="@drawable/gradient_background">
+        android:layout_marginBottom="16dp"
+        app:layout_constraintVertical_bias="0.0">
 
         <Button
             android:id="@+id/key1"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:minHeight="60dp"
             android:text="1"
             android:textSize="20sp"
             android:background="@android:color/white"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:layout_gravity="fill" />
+            android:layout_gravity="fill"
+            android:layout_margin="2dp" />
 
         <Button
             android:id="@+id/key2"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:minHeight="60dp"
             android:text="2 ABC"
             android:textSize="20sp"
             android:background="@android:color/white"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:layout_gravity="fill" />
+            android:layout_gravity="fill"
+            android:layout_margin="2dp" />
 
         <Button
             android:id="@+id/key3"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:minHeight="60dp"
             android:text="3 DEF"
             android:textSize="20sp"
             android:background="@android:color/white"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:layout_gravity="fill" />
+            android:layout_gravity="fill"
+            android:layout_margin="2dp" />
 
         <Button
             android:id="@+id/key4"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:minHeight="60dp"
             android:text="4 GHI"
             android:textSize="20sp"
             android:background="@android:color/white"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:layout_gravity="fill" />
+            android:layout_gravity="fill"
+            android:layout_margin="2dp" />
 
         <Button
             android:id="@+id/key5"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:minHeight="60dp"
             android:text="5 JKL"
             android:textSize="20sp"
             android:background="@android:color/white"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:layout_gravity="fill" />
+            android:layout_gravity="fill"
+            android:layout_margin="2dp" />
 
         <Button
             android:id="@+id/key6"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:minHeight="60dp"
             android:text="6 MNO"
             android:textSize="20sp"
             android:background="@android:color/white"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:layout_gravity="fill" />
+            android:layout_gravity="fill"
+            android:layout_margin="2dp" />
 
         <Button
             android:id="@+id/key7"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:minHeight="60dp"
             android:text="7 PQR"
             android:textSize="20sp"
             android:background="@android:color/white"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:layout_gravity="fill" />
+            android:layout_gravity="fill"
+            android:layout_margin="2dp" />
 
         <Button
             android:id="@+id/key8"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:minHeight="60dp"
             android:text="8 TUV"
             android:textSize="20sp"
             android:background="@android:color/white"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:layout_gravity="fill" />
+            android:layout_gravity="fill"
+            android:layout_margin="2dp" />
 
         <Button
             android:id="@+id/key9"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:minHeight="60dp"
             android:text="9 WXY"
             android:textSize="20sp"
             android:background="@android:color/white"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:layout_gravity="fill" />
+            android:layout_gravity="fill"
+            android:layout_margin="2dp" />
 
         <Button
             android:id="@+id/keyDelete"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:minHeight="60dp"
             android:text="X"
             android:textSize="20sp"
             android:background="@android:color/white"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:layout_gravity="fill" />
+            android:layout_gravity="fill"
+            android:layout_margin="2dp" />
 
         <Button
             android:id="@+id/key0"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:minHeight="60dp"
             android:text="0 +"
             android:textSize="20sp"
             android:background="@android:color/white"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:layout_gravity="fill" />
+            android:layout_gravity="fill"
+            android:layout_margin="2dp" />
 
         <Button
             android:id="@+id/keyConfirm"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:minHeight="60dp"
             android:text="✔"
             android:textSize="20sp"
             android:background="#32CD32"
-        android:textColor="#FFFFFF"
-        android:layout_columnWeight="1"
-        android:layout_rowWeight="1"
-        android:layout_gravity="fill" />
+            android:textColor="#FFFFFF"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:layout_gravity="fill"
+            android:layout_margin="2dp" />
     </GridLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

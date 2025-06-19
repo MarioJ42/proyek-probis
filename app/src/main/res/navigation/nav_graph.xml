@@ -31,9 +31,11 @@
             android:id="@+id/action_loginFragment_to_pinFragment"
             app:destination="@id/pinFragment" />
     </fragment>
+
     <action
         android:id="@+id/action_topUpFragment_to_loginFragment"
         app:destination="@id/loginFragment" />
+
     <fragment
         android:id="@+id/registerFragment"
         android:name="com.example.projectmdp.RegisterFragment"
@@ -87,8 +89,6 @@
             app:destination="@id/homeFragment" />
     </fragment>
 
-
-
     <fragment
         android:id="@+id/qrisPaymentFragment"
         android:name="com.example.projectmdp.QrisPaymentFragment"
@@ -127,76 +127,54 @@
     </fragment>
 
     <fragment
-        android:id="@+id/transferFragment"
-        android:name="com.example.projectmdp.TransferFragment"
-        android:label="TransferFragment">
-        <argument
-            android:name="userEmail"
-            app:argType="string"
-            android:defaultValue="" />
-        <action
-            android:id="@+id/action_transferFragment_to_homeFragment"
-            app:destination="@id/homeFragment" />
-        <action
-            android:id="@+id/action_transferFragment_to_pinVerificationFragment"
-            app:destination="@id/pinVerificationFragment" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/topUpFragment"
-        android:name="com.example.projectmdp.TopUpFragment"
-        android:label="TopUpFragment">
-        <argument
-            android:name="userEmail"
-            app:argType="string"
-            android:defaultValue="" />
-        <action
-            android:id="@+id/action_topUpFragment_to_homeFragment"
-            app:destination="@id/homeFragment" />
-        <action
-            android:id="@+id/action_topUpFragment_to_pinVerificationFragment"
-            app:destination="@id/pinVerificationFragment" />
-    </fragment>
-
-    <fragment
         android:id="@+id/pinVerificationFragment"
         android:name="com.example.projectmdp.PinVerificationFragment"
         android:label="PinVerificationFragment">
         <argument
             android:name="userEmail"
-            app:argType="string"
-            android:defaultValue="" />
-        <argument
-            android:name="recipient"
-            app:argType="string"
-            app:nullable="true" />
+            app:argType="string" />
         <argument
             android:name="amount"
             app:argType="float"
-            android:defaultValue="0.0" />
-        <argument
-            android:name="transferType"
-            app:argType="string"
-            app:nullable="true" />
-        <argument
-            android:name="bankAccount"
-            app:argType="string"
-            app:nullable="true" />
-        <argument
-            android:name="topUpMethod"
-            app:argType="string"
-            app:nullable="true" />
+            android:defaultValue="0.0" /> <!-- Hapus app:nullable="true" -->
         <argument
             android:name="orderId"
             app:argType="string"
-            app:nullable="true" />
+            android:defaultValue="" />
+        <argument
+            android:name="transferType"
+            app:argType="string" />
+        <argument
+            android:name="recipient"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="bankAccount"
+            app:argType="string"
+            android:defaultValue="" />
         <argument
             android:name="qrString"
             app:argType="string"
-            app:nullable="true" />
+            android:defaultValue="" />
+        <argument
+            android:name="recipientType"
+            app:argType="string"
+            android:defaultValue="Email" />
         <action
             android:id="@+id/action_pinVerificationFragment_to_homeFragment"
-            app:destination="@id/homeFragment" />
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/pinVerificationFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_pinVerificationFragment_to_investasiTabunganFragment"
+            app:destination="@id/investasiTabunganFragment"
+            app:popUpTo="@id/pinVerificationFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_pinVerificationFragment_to_depositPurchaseFragment"
+            app:destination="@id/depositPurchaseFragment"
+            app:popUpTo="@id/pinVerificationFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -233,10 +211,11 @@
             android:id="@+id/action_requestPremiumFragment_to_userDetailPremiumFragment"
             app:destination="@id/userDetailPremiumFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/adminProfileFragment2"
         android:name="com.example.projectmdp.AdminProfileFragment"
-        android:label="AdminProfileFragment" >
+        android:label="AdminProfileFragment">
         <argument
             android:name="userEmail"
             app:argType="string"
@@ -251,16 +230,15 @@
             android:id="@+id/action_adminProfileFragment2_to_loginFragment2"
             app:destination="@id/loginFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/allUsersFragment2"
         android:name="com.example.projectmdp.AllUsersFragment"
-        android:label="AllUsersFragment" >
-
+        android:label="AllUsersFragment">
         <argument
             android:name="userEmail"
             app:argType="string"
             android:defaultValue="" />
-
         <action
             android:id="@+id/action_allUsersFragment2_to_premiumUsersFragment2"
             app:destination="@id/premiumUsersFragment2" />
@@ -274,10 +252,11 @@
             android:id="@+id/action_allUsersFragment2_to_loginFragment"
             app:destination="@id/loginFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/premiumUsersFragment2"
         android:name="com.example.projectmdp.PremiumUsersFragment"
-        android:label="PremiumUsersFragment" >
+        android:label="PremiumUsersFragment">
         <argument
             android:name="userEmail"
             app:argType="string"
@@ -292,6 +271,7 @@
             android:id="@+id/action_premiumUsersFragment2_to_loginFragment"
             app:destination="@id/loginFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/investasiTabunganFragment"
         android:name="com.example.projectmdp.InvestasiTabunganFragment"
@@ -310,6 +290,11 @@
         <action
             android:id="@+id/action_investasiTabunganFragment_to_depositPurchaseFragment"
             app:destination="@id/depositPurchaseFragment" />
+        <action
+            android:id="@+id/action_investasiTabunganFragment_to_pinVerificationFragment"
+            app:destination="@id/pinVerificationFragment"
+            app:popUpTo="@id/investasiTabunganFragment"
+            app:popUpToInclusive="false" />
     </fragment>
 
     <fragment
@@ -327,6 +312,11 @@
         <action
             android:id="@+id/action_depositPurchaseFragment_to_investasiTabunganFragment"
             app:destination="@id/investasiTabunganFragment" />
+        <action
+            android:id="@+id/action_depositPurchaseFragment_to_pinVerificationFragment"
+            app:destination="@id/pinVerificationFragment"
+            app:popUpTo="@id/depositPurchaseFragment"
+            app:popUpToInclusive="false" />
     </fragment>
 
     <fragment
@@ -343,24 +333,67 @@
     <action android:id="@+id/action_global_adminProfileFragment2" app:destination="@id/adminProfileFragment2" />
     <action android:id="@+id/action_global_allUsersFragment2" app:destination="@id/allUsersFragment2" />
     <action android:id="@+id/action_global_premiumUsersFragment2" app:destination="@id/premiumUsersFragment2" />
+
     <fragment
         android:id="@+id/pinFragment"
         android:name="com.example.projectmdp.PinFragment"
-        android:label="PinFragment" >
+        android:label="PinFragment">
         <action
             android:id="@+id/action_pinFragment_to_homeFragment"
             app:destination="@id/homeFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/userDetailPremiumFragment"
         android:name="com.example.projectmdp.UserDetailPremiumFragment"
         android:label="fragment_user_detail_premium"
-        tools:layout="@layout/fragment_user_detail_premium" >
+        tools:layout="@layout/fragment_user_detail_premium">
         <argument
             android:name="userEmail"
             app:argType="string" />
         <action
             android:id="@+id/action_userDetailPremiumFragment_to_requestPremiumFragment"
             app:destination="@id/requestPremiumFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/transferFragment"
+        android:name="com.example.projectmdp.TransferFragment"
+        android:label="TransferFragment">
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_transferFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_transferFragment_to_pinVerificationFragment"
+            app:destination="@id/pinVerificationFragment"
+            app:popUpTo="@id/transferFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_transferFragment_to_bankAccountFragment"
+            app:destination="@id/bankAccountFragment"
+            app:popUpTo="@id/transferFragment"
+            app:popUpToInclusive="false" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/topUpFragment"
+        android:name="com.example.projectmdp.TopUpFragment"
+        android:label="TopUpFragment">
+        <argument
+            android:name="userEmail"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_topUpFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_topUpFragment_to_pinVerificationFragment"
+            app:destination="@id/pinVerificationFragment"
+            app:popUpTo="@id/topUpFragment"
+            app:popUpToInclusive="false" />
     </fragment>
 </navigation>

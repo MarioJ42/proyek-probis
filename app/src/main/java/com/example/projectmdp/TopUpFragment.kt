@@ -442,7 +442,7 @@ class TopUpFragment : Fragment() {
     }
 
     private suspend fun verifyPaymentStatus(orderId: String, userEmail: String) {
-        val maxAttempts = 5
+        val maxAttempts = 20
         val delayBetweenAttempts = 3000L
         val timeoutMillis = 60000L
 

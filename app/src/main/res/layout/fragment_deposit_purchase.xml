@@ -6,7 +6,6 @@
     android:background="@android:color/white"
     android:padding="16dp">
 
-    <!-- Back Button -->
     <Button
         android:id="@+id/btnBack"
         android:layout_width="wrap_content"
@@ -21,7 +20,6 @@
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="16dp" />
 
-    <!-- Title -->
     <TextView
         android:id="@+id/titleTextView"
         android:layout_width="wrap_content"
@@ -35,7 +33,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp" />
 
-    <!-- Amount Label -->
     <TextView
         android:id="@+id/amountLabel"
         android:layout_width="wrap_content"
@@ -47,7 +44,6 @@
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="16dp" />
 
-    <!-- Amount Input -->
     <EditText
         android:id="@+id/amountInput"
         android:layout_width="0dp"
@@ -63,7 +59,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp" />
 
-    <!-- Tenor Label -->
     <TextView
         android:id="@+id/tenorLabel"
         android:layout_width="wrap_content"
@@ -75,7 +70,6 @@
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="16dp" />
 
-    <!-- Tenor Spinner -->
     <Spinner
         android:id="@+id/tenorSpinner"
         android:layout_width="0dp"
@@ -87,7 +81,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp" />
 
-    <!-- Interest Option Label -->
     <TextView
         android:id="@+id/interestOptionLabel"
         android:layout_width="wrap_content"
@@ -99,7 +92,6 @@
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="16dp" />
 
-    <!-- Interest Option Spinner -->
     <Spinner
         android:id="@+id/interestOptionSpinner"
         android:layout_width="0dp"
@@ -111,7 +103,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp" />
 
-    <!-- Interest Rate Info -->
     <TextView
         android:id="@+id/interestRateInfo"
         android:layout_width="0dp"
@@ -124,7 +115,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp" />
 
-    <!-- Result TextView -->
     <TextView
         android:id="@+id/resultTextView"
         android:layout_width="0dp"
@@ -137,7 +127,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp" />
 
-    <!-- Simulate Button -->
     <Button
         android:id="@+id/simulateButton"
         android:layout_width="0dp"
@@ -152,7 +141,6 @@
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp" />
 
-    <!-- Confirm Deposit Button -->
     <Button
         android:id="@+id/confirmButton"
         android:layout_width="0dp"

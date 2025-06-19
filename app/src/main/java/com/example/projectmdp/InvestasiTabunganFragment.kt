@@ -33,6 +33,9 @@ class InvestasiTabunganFragment : Fragment() {
     private val viewModel: UserViewModel by viewModels { UserViewModelFactory() }
     private var userEmail: String = ""
 
+    private var pinAttemptCount = 0
+    private val maxPinAttempts = 3
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -50,12 +53,12 @@ class InvestasiTabunganFragment : Fragment() {
             return
         }
 
-        showPasswordConfirmationDialog { isVerified ->
+        showPinVerificationDialog { isVerified ->
             if (!isVerified) {
-                Toast.makeText(context, "Kata sandi salah, kembali ke beranda", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "PIN salah, kembali ke beranda", Toast.LENGTH_LONG).show()
                 val bundle = Bundle().apply { putString("userEmail", userEmail) }
                 findNavController().navigate(R.id.action_investasiTabunganFragment_to_homeFragment, bundle)
-                return@showPasswordConfirmationDialog
+                return@showPinVerificationDialog
             }
 
             fetchDepositData()
@@ -87,7 +90,7 @@ class InvestasiTabunganFragment : Fragment() {
                             val formatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
                             binding.balanceTextView.text = formatter.format(deposit.amount)
                             binding.interestRateTextView.text = "${deposit.interestRate}%"
-                            val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+                            val dateFormat = SimpleDateFormat("dd MMMMyyyy", Locale("id", "ID"))
                             binding.nextInterestDateTextView.text = dateFormat.format(deposit.nextInterestDate.toDate())
                         }
                     }
@@ -107,56 +110,10 @@ class InvestasiTabunganFragment : Fragment() {
             findNavController().navigate(R.id.action_investasiTabunganFragment_to_depositPurchaseFragment, bundle)
         }
 
-        binding.withdrawButton.setOnClickListener {
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    val snapshot = Firebase.firestore.collection("deposits")
-                        .whereEqualTo("userEmail", userEmail.lowercase())
-                        .whereEqualTo("status", "Active")
-                        .get()
-                        .await()
-                    if (snapshot.isEmpty) {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(context, "Tidak ada deposito aktif", Toast.LENGTH_LONG).show()
-                        }
-                        return@launch
-                    }
-                    val deposit = snapshot.documents[0].toObject(Deposit::class.java)
-                    if (deposit == null) {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(context, "Data deposito tidak valid", Toast.LENGTH_LONG).show()
-                        }
-                        return@launch
-                    }
 
-                    val currentDate = Calendar.getInstance().time
-                    val maturityDate = deposit.nextInterestDate.toDate()
-                    val calendar = Calendar.getInstance()
-                    calendar.time = maturityDate
-                    calendar.add(Calendar.DAY_OF_MONTH, -7)
-                    val sevenDaysBefore = calendar.time
-                    calendar.add(Calendar.DAY_OF_MONTH, 14)
-                    val sevenDaysAfter = calendar.time
-
-                    val penalty = if (currentDate.before(sevenDaysBefore) || currentDate.after(sevenDaysAfter)) {
-                        deposit.amount * 0.02
-                    } else {
-                        0.0
-                    }
-                    val withdrawableAmount = deposit.amount - penalty
-
-                    withContext(Dispatchers.Main) {
-                        showWithdrawDialog(deposit.amount, withdrawableAmount, penalty, deposit.orderId)
-                    }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "Gagal memuat data: ${e.message}", Toast.LENGTH_LONG).show()
-                    }
-                }
-            }
-        }
     }
 
+    /*
     private fun showWithdrawDialog(totalAmount: Double, withdrawableAmount: Double, penalty: Double, orderId: String) {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_withdraw, null)
         val amountInput = dialogView.findViewById<EditText>(R.id.withdrawAmountInput)
@@ -176,10 +133,10 @@ class InvestasiTabunganFragment : Fragment() {
                     return@setPositiveButton
                 }
 
-                showPasswordConfirmationDialog { isVerified ->
+                showPinVerificationDialog { isVerified ->
                     if (!isVerified) {
-                        Toast.makeText(context, "Kata sandi salah, penarikan dibatalkan", Toast.LENGTH_LONG).show()
-                        return@showPasswordConfirmationDialog
+                        Toast.makeText(context, "PIN salah, penarikan dibatalkan", Toast.LENGTH_LONG).show()
+                        return@showPinVerificationDialog
                     }
 
                     CoroutineScope(Dispatchers.IO).launch {
@@ -250,28 +207,80 @@ class InvestasiTabunganFragment : Fragment() {
 
         dialog.show()
     }
+    */
 
-    private fun showPasswordConfirmationDialog(onVerified: (Boolean) -> Unit) {
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_password_confirmation, null)
-        val passwordInput = dialogView.findViewById<EditText>(R.id.passwordInput)
+    private fun showPinVerificationDialog(onVerified: (Boolean) -> Unit) {
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.fragment_pin_verification, null)
+        val pinDots = listOf(
+            dialogView.findViewById<TextView>(R.id.pinDot1),
+            dialogView.findViewById<TextView>(R.id.pinDot2),
+            dialogView.findViewById<TextView>(R.id.pinDot3),
+            dialogView.findViewById<TextView>(R.id.pinDot4),
+            dialogView.findViewById<TextView>(R.id.pinDot5),
+            dialogView.findViewById<TextView>(R.id.pinDot6)
+        )
+        val pinBuilder = StringBuilder()
+
+        val keyButtons = mapOf(
+            R.id.key0 to "0", R.id.key1 to "1", R.id.key2 to "2", R.id.key3 to "3",
+            R.id.key4 to "4", R.id.key5 to "5", R.id.key6 to "6", R.id.key7 to "7",
+            R.id.key8 to "8", R.id.key9 to "9"
+        )
+        keyButtons.forEach { (id, digit) ->
+            dialogView.findViewById<View>(id).setOnClickListener {
+                if (pinBuilder.length < 6) {
+                    pinBuilder.append(digit)
+                    pinDots[pinBuilder.length - 1].text = "●"
+                }
+            }
+        }
+
+        dialogView.findViewById<View>(R.id.keyDelete).setOnClickListener {
+            if (pinBuilder.isNotEmpty()) {
+                pinDots[pinBuilder.length - 1].text = ""
+                pinBuilder.deleteCharAt(pinBuilder.length - 1)
+            }
+        }
 
         val dialog = AlertDialog.Builder(requireContext())
-            .setTitle("Konfirmasi Kata Sandi")
+            .setTitle("Konfirmasi PIN")
             .setView(dialogView)
-            .setPositiveButton("Konfirmasi") { _, _ ->
-                val password = passwordInput.text.toString()
-                verifyPassword(password, onVerified)
-            }
-            .setNegativeButton("Batal") { _, _ ->
-                onVerified(false)
-            }
             .setCancelable(false)
             .create()
+
+        dialogView.findViewById<View>(R.id.keyConfirm).setOnClickListener {
+            if (pinBuilder.length == 6) {
+                verifyPin(pinBuilder.toString()) { isVerified ->
+                    if (isVerified) {
+                        if (dialog.isShowing) {
+                            dialog.dismiss()
+                        }
+                        onVerified(true)
+                    } else {
+                        pinAttemptCount++
+                        val attemptsLeft = maxPinAttempts - pinAttemptCount
+                        if (attemptsLeft > 0) {
+                            Toast.makeText(context, "PIN salah. $attemptsLeft percobaan tersisa.", Toast.LENGTH_SHORT).show()
+                            pinBuilder.clear()
+                            pinDots.forEach { it.text = "" }
+                        } else {
+                            Toast.makeText(context, "Percobaan PIN maksimum tercapai. Kembali.", Toast.LENGTH_LONG).show()
+                            if (dialog.isShowing) {
+                                dialog.dismiss()
+                            }
+                            onVerified(false)
+                        }
+                    }
+                }
+            } else {
+                Toast.makeText(context, "Masukkan PIN 6 digit", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         dialog.show()
     }
 
-    private fun verifyPassword(password: String, onVerified: (Boolean) -> Unit) {
+    private fun verifyPin(pin: String, onVerified: (Boolean) -> Unit) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val snapshot = Firebase.firestore.collection("users")
@@ -286,13 +295,13 @@ class InvestasiTabunganFragment : Fragment() {
                     return@launch
                 }
                 val user = snapshot.documents[0].toObject(User::class.java)
-                val isVerified = user?.password == password
+                val isVerified = user?.pin == pin
                 withContext(Dispatchers.Main) {
                     onVerified(isVerified)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Gagal memverifikasi: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Gagal memverifikasi PIN: ${e.message}", Toast.LENGTH_LONG).show()
                     onVerified(false)
                 }
             }
