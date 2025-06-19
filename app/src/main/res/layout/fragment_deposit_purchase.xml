@@ -3,8 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
-    android:padding="16dp">
+    android:background="@drawable/gradient_background"
+    android:padding="24dp">
 
     <Button
         android:id="@+id/btnBack"
@@ -27,11 +27,11 @@
         android:text="Buat Deposito"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:textColor="@android:color/black"
+        android:textColor="@android:color/white"
         app:layout_constraintTop_toBottomOf="@id/btnBack"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="24dp" />
 
     <TextView
         android:id="@+id/amountLabel"
@@ -39,10 +39,10 @@
         android:layout_height="wrap_content"
         android:text="Jumlah Deposito (Rp)"
         android:textSize="16sp"
-        android:textColor="@android:color/black"
+        android:textColor="@android:color/white"
         app:layout_constraintTop_toBottomOf="@id/titleTextView"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="32dp" />
 
     <EditText
         android:id="@+id/amountInput"
@@ -50,10 +50,11 @@
         android:layout_height="wrap_content"
         android:inputType="numberDecimal"
         android:hint="Masukkan jumlah (min. Rp 100,000)"
-        android:background="@drawable/rounded_edittext"
-        android:padding="8dp"
+        android:background="@drawable/rounded_edittext_colorful"
+        android:padding="12dp"
         android:textSize="16sp"
         android:textColor="@android:color/black"
+        android:textColorHint="#888888"
         app:layout_constraintTop_toBottomOf="@id/amountLabel"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -65,17 +66,17 @@
         android:layout_height="wrap_content"
         android:text="Tenor (Bulan)"
         android:textSize="16sp"
-        android:textColor="@android:color/black"
+        android:textColor="@android:color/white"
         app:layout_constraintTop_toBottomOf="@id/amountInput"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="24dp" />
 
     <Spinner
         android:id="@+id/tenorSpinner"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@drawable/rounded_edittext"
-        android:padding="8dp"
+        android:background="@drawable/rounded_edittext_colorful"
+        android:padding="12dp"
         app:layout_constraintTop_toBottomOf="@id/tenorLabel"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -87,17 +88,17 @@
         android:layout_height="wrap_content"
         android:text="Opsi Bunga"
         android:textSize="16sp"
-        android:textColor="@android:color/black"
+        android:textColor="@android:color/white"
         app:layout_constraintTop_toBottomOf="@id/tenorSpinner"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="24dp" />
 
     <Spinner
         android:id="@+id/interestOptionSpinner"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@drawable/rounded_edittext"
-        android:padding="8dp"
+        android:background="@drawable/rounded_edittext_colorful"
+        android:padding="12dp"
         app:layout_constraintTop_toBottomOf="@id/interestOptionLabel"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -107,13 +108,13 @@
         android:id="@+id/interestRateInfo"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Suku Bunga: 2.0% (Rp5M - Rp20M), 2.5% (Rp20M - Rp50M), 3.0% (>Rp50M)"
+        android:text="Suku Bunga: 2.0% (&lt;Rp20Juta), 2.5% (Rp20Juta - Rp50Juta), 3.0% (&gt;Rp50Juta)\n*Tenor Test: 100%"
         android:textSize="14sp"
-        android:textColor="@android:color/black"
+        android:textColor="@android:color/white"
         app:layout_constraintTop_toBottomOf="@id/interestOptionSpinner"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="24dp" />
 
     <TextView
         android:id="@+id/resultTextView"
@@ -121,7 +122,7 @@
         android:layout_height="wrap_content"
         android:text="Hasil simulasi akan muncul di sini"
         android:textSize="14sp"
-        android:textColor="@android:color/black"
+        android:textColor="@android:color/white"
         app:layout_constraintTop_toBottomOf="@id/interestRateInfo"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -137,9 +138,9 @@
         app:layout_constraintTop_toBottomOf="@id/resultTextView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp" />
+        android:layout_marginTop="24dp"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="0dp" />
 
     <Button
         android:id="@+id/confirmButton"
@@ -153,8 +154,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp" />
+        android:layout_marginBottom="0dp"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="0dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
