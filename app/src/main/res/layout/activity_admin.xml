@@ -6,9 +6,8 @@
         android:layout_height="match_parent"
         android:background="@drawable/gradient_background">
 
-        <!-- Fragment Container -->
 
-        <!-- Bottom Navigation -->
+
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragmentContainerView2"
             android:name="androidx.navigation.fragment.NavHostFragment"
