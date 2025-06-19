@@ -3,22 +3,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
-    android:padding="16dp">
-
-    <Button
-        android:id="@+id/btnBack"
-        android:layout_width="wrap_content"
-        android:layout_height="32dp"
-        android:text="Kembali"
-        android:textSize="12sp"
-        android:background="@drawable/rounded_purple_button"
-        android:textColor="@android:color/white"
-        android:enabled="true"
-        android:clickable="true"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="16dp" />
+    android:background="@drawable/gradient_background"  android:padding="24dp"> <Button
+    android:id="@+id/btnBack"
+    android:layout_width="wrap_content"
+    android:layout_height="32dp"
+    android:text="Kembali"
+    android:textSize="12sp"
+    android:background="@drawable/rounded_purple_button"
+    android:textColor="@android:color/white"
+    android:enabled="true"
+    android:clickable="true"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    android:layout_marginTop="16dp" />
 
     <TextView
         android:id="@+id/titleTextView"
@@ -27,32 +24,24 @@
         android:text="Investasi Saya"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:textColor="@android:color/black"
-        app:layout_constraintTop_toBottomOf="@id/btnBack"
+        android:textColor="@android:color/white"  app:layout_constraintTop_toBottomOf="@id/btnBack"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp" />
-
-    <TextView
+        android:layout_marginTop="24dp" /> <TextView
         android:id="@+id/balanceLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Total Deposito"
         android:textSize="16sp"
-        android:textColor="@android:color/black"
-        app:layout_constraintTop_toBottomOf="@id/titleTextView"
+        android:textColor="@android:color/white"  app:layout_constraintTop_toBottomOf="@id/titleTextView"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="16dp" />
-
-    <TextView
+        android:layout_marginTop="32dp" /> <TextView
         android:id="@+id/balanceTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Rp0"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/black"
-        app:layout_constraintTop_toBottomOf="@id/balanceLabel"
+        android:textSize="28sp"  android:textStyle="bold"
+        android:textColor="@android:color/white"  app:layout_constraintTop_toBottomOf="@id/balanceLabel"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="8dp" />
 
@@ -62,19 +51,14 @@
         android:layout_height="wrap_content"
         android:text="Suku Bunga"
         android:textSize="16sp"
-        android:textColor="@android:color/black"
-        app:layout_constraintTop_toBottomOf="@id/balanceTextView"
+        android:textColor="@android:color/white"  app:layout_constraintTop_toBottomOf="@id/balanceTextView"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="16dp" />
-
-    <TextView
+        android:layout_marginTop="24dp" /> <TextView
         android:id="@+id/interestRateTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="0%"
-        android:textSize="16sp"
-        android:textColor="@android:color/black"
-        app:layout_constraintTop_toBottomOf="@id/interestRateLabel"
+        android:textSize="20sp"  android:textColor="@android:color/white"  app:layout_constraintTop_toBottomOf="@id/interestRateLabel"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="8dp" />
 
@@ -84,19 +68,14 @@
         android:layout_height="wrap_content"
         android:text="Tanggal Bunga Berikutnya"
         android:textSize="16sp"
-        android:textColor="@android:color/black"
-        app:layout_constraintTop_toBottomOf="@id/interestRateTextView"
+        android:textColor="@android:color/white"  app:layout_constraintTop_toBottomOf="@id/interestRateTextView"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="16dp" />
-
-    <TextView
+        android:layout_marginTop="24dp" /> <TextView
         android:id="@+id/nextInterestDateTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Belum ada deposito"
-        android:textSize="16sp"
-        android:textColor="@android:color/black"
-        app:layout_constraintTop_toBottomOf="@id/nextInterestDateLabel"
+        android:textSize="18sp"  android:textColor="@android:color/white"  app:layout_constraintTop_toBottomOf="@id/nextInterestDateLabel"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="8dp" />
 
@@ -104,14 +83,13 @@
         android:id="@+id/buyDepositButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Beli Deposito"
-        android:background="@drawable/gradient_button"
+        android:text="Beli Deposito Baru"  android:background="@drawable/gradient_button"
         android:textColor="@android:color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp" />
+        android:layout_marginBottom="0dp"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="0dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
