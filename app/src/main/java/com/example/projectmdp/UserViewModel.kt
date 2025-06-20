@@ -342,6 +342,14 @@ class UserViewModel : ViewModel() {
         }
     }
 
+    // Di dalam kelas UserViewModel.kt
+
+// ... (properti dan fungsi lain biarkan apa adanya)
+
+    /**
+     * GANTI FUNGSI LAMA ANDA DENGAN VERSI BARU YANG LENGKAP INI
+     * Versi ini sudah termasuk logika untuk mencatat bonus ke riwayat transaksi.
+     */
     private suspend fun performRegistrationWithReward(fullName: String, email: String, password: String, pin: String, phone: String, redeemedCode: String) {
         try {
             val referrerCodeDoc = db.collection("referralCodes").document(redeemedCode).get().await()
@@ -349,27 +357,57 @@ class UserViewModel : ViewModel() {
 
             if (referrerCodeDoc.exists() && referrerId != null) {
                 val newUniqueCode = generateUniqueReferralCode()
+
+                // Menjalankan semua operasi database dalam satu transaction
                 db.runTransaction { transaction ->
                     val referrerRef = usersCollection.document(referrerId)
                     val referrerSnapshot = transaction.get(referrerRef)
-                    val currentBalance = referrerSnapshot.getDouble("balance") ?: 0.0
-                    transaction.update(referrerRef, "balance", currentBalance + 10000.0)
+                    // Ambil data lengkap dari referrer untuk mendapatkan emailnya
+                    val referrerUser = referrerSnapshot.toObject(User::class.java)
 
-                    val newUserRef = usersCollection.document()
-                    val referralCodeRef = db.collection("referralCodes").document(newUniqueCode)
-                    val newUser = User(
-                        id = newUserRef.id,
-                        fullName = fullName, email = email, password = password, pin = pin, phone = phone,
-                        referralCode = newUniqueCode,
-                        redeemedReferralCode = redeemedCode
-                    )
-                    transaction.set(newUserRef, newUser)
-                    transaction.set(referralCodeRef, mapOf("userId" to newUserRef.id))
-                }.await()
+                    // Pastikan data referrer ada sebelum melanjutkan
+                    if (referrerUser != null) {
+                        val currentBalance = referrerUser.balance
+                        // 1. Update saldo si referrer
+                        transaction.update(referrerRef, "balance", currentBalance + 10000.0)
+
+                        // 2. Buat data untuk user baru yang mendaftar
+                        val newUserRef = usersCollection.document()
+                        val newUser = User(
+                            id = newUserRef.id,
+                            fullName = fullName, email = email, password = password, pin = pin, phone = phone,
+                            referralCode = newUniqueCode,
+                            redeemedReferralCode = redeemedCode
+                        )
+                        // Simpan data user baru
+                        transaction.set(newUserRef, newUser)
+
+                        // 3. Buat kode referral untuk user baru
+                        val referralCodeRef = db.collection("referralCodes").document(newUniqueCode)
+                        transaction.set(referralCodeRef, mapOf("userId" to newUserRef.id))
+
+                        // --- INI KODE TAMBAHAN YANG BARU ---
+                        // 4. Buat dan catat transaksi bonus untuk si referrer
+                        val bonusTransaction = Transaksi(
+                            userEmail = referrerUser.email, // Dicatat atas nama PEMBERI referal
+                            type = "Referral Bonus",
+                            recipient = "From new user: $email", // Deskripsi asal bonus
+                            amount = 10000.0,
+                            timestamp = com.google.firebase.Timestamp.now(),
+                            status = "Completed",
+                            orderId = "REF-${newUserRef.id}" // ID unik untuk transaksi ini
+                        )
+                        // Simpan transaksi bonus ke koleksi 'transactions'
+                        transaction.set(transactionsCollection.document(), bonusTransaction)
+                        // --- AKHIR DARI KODE TAMBAHAN ---
+                    }
+                }.await() // Menunggu hingga semua operasi di dalam transaction selesai
+
                 Log.d("UserViewModel", "Registration with referral successful for $email")
                 _loginResult.postValue(true)
-                setupRealtimeBalanceListener(email)
+                setupRealtimeBalanceListener(email) // Pastikan fungsi ini ada atau hapus jika tidak perlu
             } else {
+                // Jika kode referral tidak valid, daftarkan secara normal.
                 Log.w("UserViewModel", "Invalid referral code '$redeemedCode'. Proceeding with normal registration.")
                 performNormalRegistration(fullName, email, password, pin, phone)
             }
@@ -379,6 +417,9 @@ class UserViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Fungsi ini tidak berubah. Pastikan ada di dalam ViewModel Anda.
+     */
     private suspend fun generateUniqueReferralCode(): String {
         val referralCodesCollection = db.collection("referralCodes")
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
