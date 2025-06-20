@@ -99,15 +99,21 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.user.observe(viewLifecycleOwner, { user ->
+        // Di dalam ProfileFragment.kt -> onViewCreated
+
+        viewModel.user.observe(viewLifecycleOwner) { user ->
             if (user != null) {
-                Log.d("ProfileFragment", "User data received: email=${user.email}, phone=${user.phone}, photoUrl=${user.photoUrl}")
+                // Log untuk debugging, tambahkan referralCode
+                Log.d("ProfileFragment", "User data received: email=${user.email}, referralCode=${user.referralCode}")
+
+                // Mengisi data yang sudah ada
                 binding.etFullName.setText(user.fullName)
                 binding.etEmail.setText(user.email)
                 binding.etPhone.setText(user.phone)
 
+                // Logika untuk menampilkan foto profil (tetap sama)
                 if (user.photoUrl.isNotEmpty()) {
-                    Glide.with(binding.imageViewProfile)
+                    Glide.with(this)
                         .load(user.photoUrl)
                         .placeholder(R.drawable.ic_default_profile_image)
                         .error(R.drawable.ic_default_profile_image)
@@ -115,12 +121,26 @@ class ProfileFragment : Fragment() {
                 } else {
                     binding.imageViewProfile.setImageResource(R.drawable.ic_default_profile_image)
                 }
+
+                // --- INI LOGIKA BARU UNTUK MENAMPILKAN KODE REFERRAL ---
+                if (user.referralCode != null && user.referralCode.isNotEmpty()) {
+                    // Jika user punya kode referral, tampilkan
+                    binding.tvReferralCodeLabel.visibility = View.VISIBLE
+                    binding.tvReferralCodeValue.visibility = View.VISIBLE
+                    binding.tvReferralCodeValue.text = user.referralCode
+                } else {
+                    // Jika tidak punya, pastikan elemennya disembunyikan
+                    binding.tvReferralCodeLabel.visibility = View.GONE
+                    binding.tvReferralCodeValue.visibility = View.GONE
+                }
+                // --- AKHIR DARI LOGIKA BARU ---
+
             } else {
                 Log.e("ProfileFragment", "User data is null, navigating to login")
                 Toast.makeText(requireContext(), "Please log in", Toast.LENGTH_SHORT).show()
                 findNavController().navigate(R.id.action_profileFragment_to_loginFragment)
             }
-        })
+        }
 
         viewModel.premiumStatus.observe(viewLifecycleOwner) { premium ->
             if (premium != null) {
