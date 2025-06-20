@@ -1,7 +1,6 @@
 package com.example.projectmdp
 
 import android.util.Log
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -99,6 +98,8 @@ class UserViewModel : ViewModel() {
     private val _registrationResult = MutableLiveData<Result<String>?>()
     val registrationResult: LiveData<Result<String>?> get() = _registrationResult
 
+    private var userBalanceListener: com.google.firebase.firestore.ListenerRegistration? = null
+
     init {
         createAdminUser()
     }
@@ -112,6 +113,7 @@ class UserViewModel : ViewModel() {
         _userEmail.value = email.lowercase()
         fetchUser(email.lowercase())
         fetchPremiumStatus(email.lowercase())
+        setupRealtimeBalanceListener(email.lowercase())
     }
 
     fun isOrderSimulated(orderId: String): Boolean {
@@ -136,6 +138,7 @@ class UserViewModel : ViewModel() {
                     Log.d("UserViewModel", "Admin user created: william@gmail.com")
                     fetchUser("william@gmail.com")
                     fetchPremiumStatus("william@gmail.com")
+                    setupRealtimeBalanceListener("william@gmail.com")
                 } else {
                     Log.d("UserViewModel", "Admin user already exists: william@gmail.com")
                 }
@@ -161,6 +164,8 @@ class UserViewModel : ViewModel() {
     fun clearRememberMe() {
         viewModelScope.launch {
             MyApplication.db.RememberedUserDAO().clearRememberedUser()
+            userBalanceListener?.remove()
+            userBalanceListener = null
         }
     }
 
@@ -184,6 +189,7 @@ class UserViewModel : ViewModel() {
                     _balance.postValue(user.balance)
                     _loginResult.postValue(true)
                     fetchPremiumStatus(email.lowercase())
+                    setupRealtimeBalanceListener(email.lowercase())
                 } else {
                     _loginResult.postValue(false)
                 }
@@ -212,8 +218,6 @@ class UserViewModel : ViewModel() {
                     val user = doc.toObject(User::class.java)?.copy(id = doc.id)
                     if (user != null) {
                         _user.postValue(user)
-                        _userEmail.postValue(normalizedEmail)
-                        _balance.postValue(user.balance)
                         Log.d(
                             "UserViewModel",
                             "Fetched user: email=$normalizedEmail, balance=${user.balance}"
@@ -234,6 +238,39 @@ class UserViewModel : ViewModel() {
                 _userEmail.postValue(null)
             }
         }
+    }
+
+    private fun setupRealtimeBalanceListener(email: String) {
+        userBalanceListener?.remove()
+        userBalanceListener = null
+
+        val normalizedEmail = email.lowercase()
+        userBalanceListener = usersCollection.whereEqualTo("email", normalizedEmail)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    Log.w("UserViewModel", "Listen failed for balance.", e)
+                    return@addSnapshotListener
+                }
+
+                if (snapshots != null && !snapshots.isEmpty) {
+                    val userDoc = snapshots.documents[0]
+                    val user = userDoc.toObject(User::class.java)?.copy(id = userDoc.id)
+                    user?.let {
+                        _balance.postValue(it.balance)
+                        _user.postValue(it)
+                        Log.d("UserViewModel", "Real-time balance update for ${it.email}: ${it.balance}")
+                    }
+                } else {
+                    Log.d("UserViewModel", "No user document found for real-time balance listener for email: $normalizedEmail")
+                }
+            }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        userBalanceListener?.remove()
+        userBalanceListener = null
+        Log.d("UserViewModel", "Real-time balance listener removed on ViewModel cleared.")
     }
 
     fun fetchPremiumStatus(email: String) {
@@ -265,33 +302,24 @@ class UserViewModel : ViewModel() {
                 val normalizedEmail = email.lowercase()
                 val snapshot = usersCollection.whereEqualTo("email", normalizedEmail).get().await()
                 if (!snapshot.isEmpty) {
-                    // Kasus email sudah ada, ini adalah 'kegagalan' yang terkendali
                     Log.w("UserViewModel", "Registration failed: Email already exists.")
-                    _loginResult.postValue(false) // Kirim 'false'
+                    _loginResult.postValue(false)
                     return@launch
                 }
 
-                // Cek apakah kode referral diisi atau tidak
                 if (referralCode.isNotBlank()) {
-                    // Alur dengan referral
                     performRegistrationWithReward(fullName, normalizedEmail, password, pin, phone, referralCode)
                 } else {
-                    // Alur normal tanpa referral
                     performNormalRegistration(fullName, normalizedEmail, password, pin, phone)
                 }
             } catch (e: Exception) {
-                // Ini adalah blok penangkap SEMUA error lainnya (masalah jaringan, aturan firebase, dll)
                 Log.e("UserViewModel", "An unexpected error occurred during registration: ${e.message}", e)
-                _loginResult.postValue(null) // Kirim 'null' untuk error tak terduga
+                _loginResult.postValue(null)
             }
         }
     }
 
-    /**
-     * GANTI FUNGSI PRIVATE LAMA ANDA DENGAN INI
-     */
     private suspend fun performNormalRegistration(fullName: String, email: String, password: String, pin: String, phone: String) {
-        // try-catch di dalam sini untuk menangani kegagalan spesifik pada proses ini
         try {
             val uniqueCode = generateUniqueReferralCode()
             val userDocRef = usersCollection.document()
@@ -307,17 +335,14 @@ class UserViewModel : ViewModel() {
             }.await()
             Log.d("UserViewModel", "Normal registration successful for $email")
             _loginResult.postValue(true)
+            setupRealtimeBalanceListener(email)
         } catch (e: Exception) {
             Log.e("UserViewModel", "Error in performNormalRegistration: ${e.message}", e)
-            _loginResult.postValue(null) // Pastikan melaporkan kegagalan
+            _loginResult.postValue(null)
         }
     }
 
-    /**
-     * GANTI FUNGSI PRIVATE LAMA ANDA DENGAN INI
-     */
     private suspend fun performRegistrationWithReward(fullName: String, email: String, password: String, pin: String, phone: String, redeemedCode: String) {
-        // try-catch di dalam sini untuk menangani kegagalan spesifik pada proses ini
         try {
             val referrerCodeDoc = db.collection("referralCodes").document(redeemedCode).get().await()
             val referrerId = referrerCodeDoc.getString("userId")
@@ -343,18 +368,17 @@ class UserViewModel : ViewModel() {
                 }.await()
                 Log.d("UserViewModel", "Registration with referral successful for $email")
                 _loginResult.postValue(true)
+                setupRealtimeBalanceListener(email)
             } else {
-                // Jika kode referral ternyata tidak valid, daftarkan secara normal.
                 Log.w("UserViewModel", "Invalid referral code '$redeemedCode'. Proceeding with normal registration.")
                 performNormalRegistration(fullName, email, password, pin, phone)
             }
         } catch (e: Exception) {
             Log.e("UserViewModel", "Error in performRegistrationWithReward: ${e.message}", e)
-            _loginResult.postValue(null) // Pastikan melaporkan kegagalan
+            _loginResult.postValue(null)
         }
     }
 
-    // Fungsi helper ini tidak perlu diubah, biarkan seperti adanya
     private suspend fun generateUniqueReferralCode(): String {
         val referralCodesCollection = db.collection("referralCodes")
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -409,13 +433,10 @@ class UserViewModel : ViewModel() {
                 Log.d("UserViewModel", "Firestore update successful for docId=$docId")
 
                 _userEmail.postValue(normalizedNewEmail)
-                fetchUser(normalizedNewEmail)
+                setupRealtimeBalanceListener(normalizedNewEmail)
                 Log.d("UserViewModel", "Updated profile: email=$email to newEmail=$normalizedNewEmail")
             } catch (e: Exception) {
                 Log.e("UserViewModel", "Update profile error for email=$email: ${e.message}", e)
-                withContext(Dispatchers.Main) {
-                    // Toast.makeText(requireContext(user.value.id), "Failed to update profile: ${e.message}", Toast.LENGTH_LONG).show()
-                }
             }
         }
     }
@@ -469,9 +490,7 @@ class UserViewModel : ViewModel() {
                 }.await()
                 val newBalance = user.balance + amount
                 _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
-                _balance.postValue(newBalance)
                 _topUpResult.postValue(TopUpResult.Success("Balance update successful"))
-                fetchUser(normalizedEmail)
                 Log.d("UserViewModel", "Top-up completed: orderId=$orderId, newBalance=$newBalance")
             } catch (e: Exception) {
                 _topUpResult.postValue(TopUpResult.Failure("Balance update failed: ${e.message}"))
@@ -535,9 +554,7 @@ class UserViewModel : ViewModel() {
 
                 simulatedOrders.add(orderId)
                 _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
-                _balance.postValue(newBalance)
                 _paymentResult.postValue(PaymentResult.Success(amount))
-                fetchUser(normalizedEmail)
                 Log.d("UserViewModel", "QRIS payment completed: orderId=$orderId, newBalance=$newBalance")
             } catch (e: Exception) {
                 _paymentResult.postValue(PaymentResult.Failure("Payment failed: ${e.message}"))
@@ -591,7 +608,6 @@ class UserViewModel : ViewModel() {
                     transaction.set(transactionDocRef, transaksi)
                 }.await()
 
-                fetchUser(fromEmail.lowercase())
                 Log.d(
                     "UserViewModel",
                     "Transfer successful: New sender balance=${_user.value?.balance}"
@@ -642,7 +658,6 @@ class UserViewModel : ViewModel() {
                     transaction.set(transactionDocRef, transaksi)
                 }.await()
 
-                fetchUser(userEmail.lowercase())
                 Log.d(
                     "UserViewModel",
                     "Bank transfer successful: New balance=${_user.value?.balance}"
@@ -723,8 +738,8 @@ class UserViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 if (simulatedOrders.contains(orderId)) {
-                    Log.d("UserViewModel", "Skipping duplicate simulation for orderId=$orderId")
                     _simulationResult.postValue(SimulationResult.Success("Payment already processed"))
+                    Log.d("UserViewModel", "Skipping duplicate simulation for orderId=$orderId")
                     return@launch
                 }
 
@@ -752,7 +767,6 @@ class UserViewModel : ViewModel() {
                     simulatedOrders.add(orderId)
                     _simulationResult.postValue(SimulationResult.Success(response.message ?: "Payment successful"))
                     Log.d("UserViewModel", "QRIS payment simulated: orderId=$orderId")
-                    fetchUser(userEmail.lowercase())
                 } else {
                     _simulationResult.postValue(SimulationResult.Failure(response.message ?: "Simulation failed"))
                     Log.e("UserViewModel", "QRIS simulation failed: orderId=$orderId, message=${response.message}")
@@ -882,9 +896,7 @@ class UserViewModel : ViewModel() {
                 }
 
                 _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
-                _balance.postValue(newBalance)
                 _depositResult.postValue(DepositResult.Success("Deposit created/updated successfully"))
-                fetchUser(normalizedEmail)
                 Log.d("UserViewModel", "Deposito processed: orderId=$orderId, newBalance=$newBalance")
             } catch (e: Exception) {
                 _depositResult.postValue(DepositResult.Failure("Deposit processing failed: ${e.message}"))
@@ -958,7 +970,6 @@ class UserViewModel : ViewModel() {
                     }.await()
 
                     _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
-                    _balance.postValue(newBalance)
                     Log.d("UserViewModel", "Deposit matured and cashed out: depositId=$depositId, amount=$finalAmountToReturn")
                 } else {
                     val monthlyInterest = deposit.amount * (deposit.interestRate / 100) / 12
@@ -994,7 +1005,6 @@ class UserViewModel : ViewModel() {
                             transaction.set(transactionDocRef, transaksi)
                         }.await()
                         _user.postValue(user.copy(id = userDoc.id, balance = newBalance))
-                        _balance.postValue(newBalance)
                     }
 
                     val calendar = Calendar.getInstance()
@@ -1003,8 +1013,6 @@ class UserViewModel : ViewModel() {
                     val newNextInterestDate = com.google.firebase.Timestamp(calendar.time)
                     depositsCollection.document(depositId).update("nextInterestDate", newNextInterestDate).await()
                 }
-
-                fetchUser(deposit.userEmail)
             } catch (e: Exception) {
                 Log.e("UserViewModel", "Error processing interest for depositId=$depositId: ${e.message}", e)
             }
