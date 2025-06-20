@@ -17,6 +17,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
@@ -103,10 +104,6 @@ class ProfileFragment : Fragment() {
 
         viewModel.user.observe(viewLifecycleOwner) { user ->
             if (user != null) {
-                // Log untuk debugging, tambahkan referralCode
-                Log.d("ProfileFragment", "User data received: email=${user.email}, referralCode=${user.referralCode}")
-
-                // Mengisi data yang sudah ada
                 binding.etFullName.setText(user.fullName)
                 binding.etEmail.setText(user.email)
                 binding.etPhone.setText(user.phone)
@@ -115,23 +112,23 @@ class ProfileFragment : Fragment() {
                 if (user.photoUrl.isNotEmpty()) {
                     Glide.with(this)
                         .load(user.photoUrl)
-                        .placeholder(R.drawable.ic_default_profile_image)
-                        .error(R.drawable.ic_default_profile_image)
                         .into(binding.imageViewProfile)
                 } else {
                     binding.imageViewProfile.setImageResource(R.drawable.ic_default_profile_image)
                 }
 
                 // --- INI LOGIKA BARU UNTUK MENAMPILKAN KODE REFERRAL ---
-                if (user.referralCode != null && user.referralCode.isNotEmpty()) {
+                if (!user.referralCode.isNullOrEmpty()) {
                     // Jika user punya kode referral, tampilkan
                     binding.tvReferralCodeLabel.visibility = View.VISIBLE
                     binding.tvReferralCodeValue.visibility = View.VISIBLE
                     binding.tvReferralCodeValue.text = user.referralCode
+                    viewModel.fetchReferralUsageCount(user.referralCode)
                 } else {
                     // Jika tidak punya, pastikan elemennya disembunyikan
                     binding.tvReferralCodeLabel.visibility = View.GONE
                     binding.tvReferralCodeValue.visibility = View.GONE
+//                    binding.tvReferralCount.visibility = View.GONE
                 }
                 // --- AKHIR DARI LOGIKA BARU ---
 
@@ -140,6 +137,13 @@ class ProfileFragment : Fragment() {
                 Toast.makeText(requireContext(), "Please log in", Toast.LENGTH_SHORT).show()
                 findNavController().navigate(R.id.action_profileFragment_to_loginFragment)
             }
+        }
+
+        viewModel.referralCount.observe(viewLifecycleOwner) {count->
+            val message = "kode referal sudah di pake $count kali."
+            Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+//            binding.tvReferralCount.text = "Used $count time(s)"
+//            binding.tvReferralCount.visibility = View.VISIBLE
         }
 
         viewModel.premiumStatus.observe(viewLifecycleOwner) { premium ->
@@ -276,6 +280,7 @@ class ProfileFragment : Fragment() {
         _binding = null
     }
 }
+
 
 private fun EditText.addTextWatcher(block: (String) -> Unit) {
     this.addTextChangedListener(object : TextWatcher {
