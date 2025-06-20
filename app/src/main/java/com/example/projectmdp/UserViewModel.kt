@@ -633,33 +633,43 @@ class UserViewModel : ViewModel() {
                     throw IllegalArgumentException("Insufficient balance")
                 }
 
-                val transaksi = Transaksi(
+                val timestamp = com.google.firebase.Timestamp.now()
+
+                // Transaksi untuk pengirim
+                val senderTransaction = Transaksi(
                     userEmail = fromEmail.lowercase(),
                     type = "Transfer",
                     recipient = toIdentifier.lowercase(),
                     amount = amount,
-                    timestamp = com.google.firebase.Timestamp.now(),
+                    timestamp = timestamp,
+                    status = "Completed"
+                )
+
+                // Transaksi untuk penerima
+                val receiverTransaction = Transaksi(
+                    userEmail = recipient.email.lowercase(),
+                    type = "Receive",
+                    recipient = "MySelf",
+                    amount = amount,
+                    timestamp = timestamp,
                     status = "Completed"
                 )
 
                 db.runTransaction { transaction ->
                     transaction.update(fromDoc.reference, "balance", sender.balance - amount)
                     transaction.update(toDoc.reference, "balance", recipient.balance + amount)
-                    val transactionDocRef = transactionsCollection.document(UUID.randomUUID().toString())
-                    transaction.set(transactionDocRef, transaksi)
+
+                    val senderRef = transactionsCollection.document(UUID.randomUUID().toString())
+                    val receiverRef = transactionsCollection.document(UUID.randomUUID().toString())
+
+                    transaction.set(senderRef, senderTransaction)
+                    transaction.set(receiverRef, receiverTransaction)
                 }.await()
 
-                Log.d(
-                    "UserViewModel",
-                    "Transfer successful: New sender balance=${_user.value?.balance}"
-                )
+                Log.d("UserViewModel", "Transfer successful and both transactions recorded")
                 onResult(null)
             } catch (e: Exception) {
-                Log.e(
-                    "UserViewModel",
-                    "Transfer failed from $fromEmail to $toIdentifier: ${e.message}",
-                    e
-                )
+                Log.e("UserViewModel", "Transfer failed: ${e.message}", e)
                 onResult(e.message)
             }
         }

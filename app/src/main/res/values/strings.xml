@@ -32,4 +32,12 @@
         <item>&lt; 30 days</item>
     </string-array>
 
+    <string-array name="transaction_category">
+        <item>All</item>
+        <item>Pemasukan</item>
+        <item>Pengeluaran</item>
+    </string-array>
+
+
+
 </resources>

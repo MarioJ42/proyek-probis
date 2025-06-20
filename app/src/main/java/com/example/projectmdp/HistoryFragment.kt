@@ -24,6 +24,7 @@ class HistoryFragment : Fragment() {
     private val db = FirebaseFirestore.getInstance()
     private var allTransactions: List<TransactionDisplayItem> = emptyList()
     private var selectedType: String = "All"
+    private var selectedCategory: String = "All"
     private var selectedDate: String = "All"
 
     private lateinit var transactionAdapter: TransactionAdapter
@@ -92,12 +93,47 @@ class HistoryFragment : Fragment() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
+        val categoryAdapter = ArrayAdapter.createFromResource(
+            requireContext(),
+            R.array.transaction_category,
+            android.R.layout.simple_spinner_item
+        )
+
+        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_item)
+        binding.categoryFilterSpinner.adapter=categoryAdapter
+
+        binding.categoryFilterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+               selectedCategory = parent?.getItemAtPosition(position).toString()
+                applyFilters()
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+            }
+        }
+
+
     }
 
     private fun applyFilters() {
         val now = Date()
         val filteredList = allTransactions.filter { item ->
-            val matchType = selectedType == "All" || item.data.type == selectedType
+            val transactionType = item.data.type
+            val isPemasukan = transactionType in listOf("TopUp Saldo", "Referral Bonus", "Deposit Maturity", "Deposit Interest","Receive")
+            val isPengeluaran = transactionType in listOf("QRIS Payment", "Transfer", "Bank Transfer", "Premium Deduction", "Deposito")
+
+            val matchType = selectedType == "All" || transactionType == selectedType
+            val matchCategory = when (selectedCategory) {
+                "All" -> true
+                "Pemasukan" -> isPemasukan
+                "Pengeluaran" -> isPengeluaran
+                else -> true
+            }
 
             val transactionDate = item.data.timestamp?.toDate()
             val diffMillis = now.time - (transactionDate?.time ?: 0)
@@ -111,11 +147,12 @@ class HistoryFragment : Fragment() {
                 else -> true
             }
 
-            matchType && matchDate
+            matchType && matchDate && matchCategory
         }
 
         transactionAdapter.submitList(filteredList)
     }
+
 
 
     private fun setupRecyclerView() {
