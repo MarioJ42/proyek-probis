@@ -2,11 +2,15 @@ package com.example.projectmdp
 
 import android.app.AlertDialog
 import android.os.Bundle
+import android.text.Editable
+import android.text.Selection
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -25,6 +29,8 @@ import java.text.NumberFormat
 import java.util.UUID
 import java.util.Locale
 import java.util.Calendar
+import java.text.DecimalFormat
+import java.util.Currency
 
 class DepositPurchaseFragment : Fragment() {
     private var _binding: FragmentDepositPurchaseBinding? = null
@@ -62,6 +68,7 @@ class DepositPurchaseFragment : Fragment() {
 
             setupTenorSpinner()
             setupInterestOptionSpinner()
+            setupAmountFormatting(binding.amountInput)
             setupListeners()
         }
 
@@ -87,7 +94,8 @@ class DepositPurchaseFragment : Fragment() {
 
     private fun setupListeners() {
         binding.simulateButton.setOnClickListener {
-            val amount = binding.amountInput.text.toString().toDoubleOrNull() ?: 0.0
+            val amountText = binding.amountInput.text.toString().replace("Rp ", "").replace(".", "")
+            val amount = amountText.toDoubleOrNull() ?: 0.0
             if (amount < 100_000) {
                 Toast.makeText(context, "Jumlah minimum Rp100.000", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -115,6 +123,7 @@ class DepositPurchaseFragment : Fragment() {
             val isReinvest = binding.interestOptionSpinner.selectedItem.toString() == "Putar Kembali Bunga"
 
             val formatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+            formatter.currency = Currency.getInstance("IDR")
 
             if (!isTestTenor) {
                 val monthlyRate = interestRate / 100 / 12
@@ -144,7 +153,8 @@ class DepositPurchaseFragment : Fragment() {
         }
 
         binding.confirmButton.setOnClickListener {
-            val amount = binding.amountInput.text.toString().toDoubleOrNull() ?: 0.0
+            val amountText = binding.amountInput.text.toString().replace("Rp ", "").replace(".", "")
+            val amount = amountText.toDoubleOrNull() ?: 0.0
             if (amount < 100_000) {
                 Toast.makeText(context, "Jumlah minimum Rp100.000", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -249,6 +259,82 @@ class DepositPurchaseFragment : Fragment() {
                     }
                 }
             }
+        }
+    }
+
+
+
+    private fun setupAmountFormatting(editText: EditText) {
+        val formatter = NumberFormat.getNumberInstance(Locale("id", "ID")) as DecimalFormat
+        val symbols = formatter.decimalFormatSymbols
+        val groupSeparator = symbols.groupingSeparator
+
+        editText.addTextChangedListener(object : TextWatcher {
+            private var current = ""
+            private var isDeleting = false
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                if (count > 0 && after == 0) {
+                    isDeleting = true
+                } else {
+                    isDeleting = false
+                }
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                if (s.toString() == current) {
+                    return
+                }
+
+                editText.removeTextChangedListener(this)
+
+                var cleanString = s.toString().replace("Rp", "").replace(groupSeparator.toString(), "").trim()
+
+                if (cleanString.isEmpty()) {
+                    current = ""
+                    editText.setText("")
+                    editText.addTextChangedListener(this)
+                    return
+                }
+
+                if (cleanString.startsWith(groupSeparator)) {
+                    cleanString = "0$cleanString"
+                }
+
+                val parsed = try {
+                    cleanString.toLong()
+                } catch (e: NumberFormatException) {
+                    0L
+                }
+
+                val formattedText = formatter.format(parsed)
+                val newText = "Rp $formattedText"
+
+                current = newText
+                editText.setText(newText)
+
+                val selectionIndex = if (isDeleting) {
+                    editText.selectionStart.coerceAtMost(newText.length)
+                } else {
+                    newText.length
+                }
+                Selection.setSelection(editText.text, selectionIndex)
+
+
+                editText.addTextChangedListener(this)
+
+                if (editText.text.isEmpty() || !editText.text.startsWith("Rp ")) {
+                    editText.setText("Rp ")
+                    Selection.setSelection(editText.text, editText.text.length)
+                }
+            }
+        })
+
+        if (editText.text.isEmpty()) {
+            editText.setText("Rp ")
+            Selection.setSelection(editText.text, editText.text.length)
         }
     }
 
