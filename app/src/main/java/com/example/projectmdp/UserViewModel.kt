@@ -105,12 +105,12 @@ class UserViewModel : ViewModel() {
     }
 
     fun clearRegistrationResult() {
-        _registrationResult.value = null
+        _registrationResult.postValue(null)
     }
 
     fun setUserEmail(email: String) {
         Log.d("UserViewModel", "Setting user email: $email")
-        _userEmail.value = email.lowercase()
+        _userEmail.postValue(email.lowercase())
         fetchUser(email.lowercase())
         fetchPremiumStatus(email.lowercase())
         setupRealtimeBalanceListener(email.lowercase())
@@ -342,14 +342,6 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    // Di dalam kelas UserViewModel.kt
-
-// ... (properti dan fungsi lain biarkan apa adanya)
-
-    /**
-     * GANTI FUNGSI LAMA ANDA DENGAN VERSI BARU YANG LENGKAP INI
-     * Versi ini sudah termasuk logika untuk mencatat bonus ke riwayat transaksi.
-     */
     private suspend fun performRegistrationWithReward(fullName: String, email: String, password: String, pin: String, phone: String, redeemedCode: String) {
         try {
             val referrerCodeDoc = db.collection("referralCodes").document(redeemedCode).get().await()
@@ -358,20 +350,15 @@ class UserViewModel : ViewModel() {
             if (referrerCodeDoc.exists() && referrerId != null) {
                 val newUniqueCode = generateUniqueReferralCode()
 
-                // Menjalankan semua operasi database dalam satu transaction
                 db.runTransaction { transaction ->
                     val referrerRef = usersCollection.document(referrerId)
                     val referrerSnapshot = transaction.get(referrerRef)
-                    // Ambil data lengkap dari referrer untuk mendapatkan emailnya
                     val referrerUser = referrerSnapshot.toObject(User::class.java)
 
-                    // Pastikan data referrer ada sebelum melanjutkan
                     if (referrerUser != null) {
                         val currentBalance = referrerUser.balance
-                        // 1. Update saldo si referrer
                         transaction.update(referrerRef, "balance", currentBalance + 10000.0)
 
-                        // 2. Buat data untuk user baru yang mendaftar
                         val newUserRef = usersCollection.document()
                         val newUser = User(
                             id = newUserRef.id,
@@ -379,35 +366,28 @@ class UserViewModel : ViewModel() {
                             referralCode = newUniqueCode,
                             redeemedReferralCode = redeemedCode
                         )
-                        // Simpan data user baru
                         transaction.set(newUserRef, newUser)
 
-                        // 3. Buat kode referral untuk user baru
                         val referralCodeRef = db.collection("referralCodes").document(newUniqueCode)
                         transaction.set(referralCodeRef, mapOf("userId" to newUserRef.id))
 
-                        // --- INI KODE TAMBAHAN YANG BARU ---
-                        // 4. Buat dan catat transaksi bonus untuk si referrer
                         val bonusTransaction = Transaksi(
-                            userEmail = referrerUser.email, // Dicatat atas nama PEMBERI referal
+                            userEmail = referrerUser.email,
                             type = "Referral Bonus",
-                            recipient = "From new user: $email", // Deskripsi asal bonus
+                            recipient = "From new user: $email",
                             amount = 10000.0,
                             timestamp = com.google.firebase.Timestamp.now(),
                             status = "Completed",
-                            orderId = "REF-${newUserRef.id}" // ID unik untuk transaksi ini
+                            orderId = "REF-${newUserRef.id}"
                         )
-                        // Simpan transaksi bonus ke koleksi 'transactions'
                         transaction.set(transactionsCollection.document(), bonusTransaction)
-                        // --- AKHIR DARI KODE TAMBAHAN ---
                     }
-                }.await() // Menunggu hingga semua operasi di dalam transaction selesai
+                }.await()
 
                 Log.d("UserViewModel", "Registration with referral successful for $email")
                 _loginResult.postValue(true)
-                setupRealtimeBalanceListener(email) // Pastikan fungsi ini ada atau hapus jika tidak perlu
+                setupRealtimeBalanceListener(email)
             } else {
-                // Jika kode referral tidak valid, daftarkan secara normal.
                 Log.w("UserViewModel", "Invalid referral code '$redeemedCode'. Proceeding with normal registration.")
                 performNormalRegistration(fullName, email, password, pin, phone)
             }
@@ -417,9 +397,6 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Fungsi ini tidak berubah. Pastikan ada di dalam ViewModel Anda.
-     */
     private suspend fun generateUniqueReferralCode(): String {
         val referralCodesCollection = db.collection("referralCodes")
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -813,7 +790,7 @@ class UserViewModel : ViewModel() {
                     Log.e("UserViewModel", "QRIS simulation failed: orderId=$orderId, message=${response.message}")
                 }
             } catch (e: HttpException) {
-                val errorBody = e.response()?.errorBody()?.string() ?: "No response body"
+                val errorBody = e.response()?.errorBody()?.string() ?: "Unknown error"
                 val message = when (e.code()) {
                     400 -> "Invalid QRIS request: $errorBody"
                     404 -> "QRIS order not found: $orderId"
@@ -924,7 +901,7 @@ class UserViewModel : ViewModel() {
                         else -> 2.0
                     }
 
-                    val updates = mapOf(
+                    val updates = mutableMapOf<String, Any>(
                         "amount" to totalAmount,
                         "interestRate" to newInterestRate,
                         "isReinvest" to isReinvest,
@@ -932,6 +909,7 @@ class UserViewModel : ViewModel() {
                         "orderId" to orderId,
                         "tenorMonths" to tenorMonths
                     )
+
                     depositsCollection.document(depositDoc.id).update(updates).await()
                     Log.d("UserViewModel", "Deposit updated: orderId=$orderId, totalAmount=$totalAmount, newInterestRate=$newInterestRate, tenorMonths=$tenorMonths")
                 }
@@ -1092,7 +1070,7 @@ class UserViewModel : ViewModel() {
                     accountHolderName = accountHolderName.trim()
                 )
                 val docRef = bankAccountsCollection.add(bankAccount).await()
-                _bankAccounts.value = (_bankAccounts.value ?: emptyList()) + bankAccount.copy(id = docRef.id)
+                _bankAccounts.postValue((_bankAccounts.value ?: emptyList()) + bankAccount.copy(id = docRef.id))
                 Log.d("UserViewModel", "Bank account saved for email=$normalizedEmail, docId=${docRef.id}")
                 onResult(null)
             } catch (e: Exception) {
