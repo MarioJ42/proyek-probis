@@ -2,16 +2,16 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/allUsersFragment2"
-        android:title="All Users"
-        android:icon="@android:drawable/ic_dialog_alert" />
+        android:icon="@drawable/twopeople"
+        android:title="All Users" />
     <item
         android:id="@+id/premiumUsersFragment2"
-        android:title="Premium Users"
-        android:icon="@android:drawable/ic_btn_speak_now" />
+        android:icon="@drawable/premium_user"
+        android:title="Premium Users" />
     <item
         android:id="@+id/requestPremiumFragment"
-        android:title="Request Premium"
-        android:icon="@android:drawable/ic_menu_gallery" />
+        android:icon="@drawable/quote_request"
+        android:title="Request Premium" />
     <item
         android:id="@+id/adminProfileFragment2"
         android:icon="@drawable/ic_profile"
